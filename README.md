@@ -1,4 +1,4 @@
-## Focused Adverasrial Invariance Regularized Estimation
+# Focused Adverasrial Invariance Regularized Estimation
 
 
 
@@ -6,11 +6,11 @@ This repository contains code to reproduce the simulation and real dataset appli
 
 
 
-### Instructions to reproduce the results
+## Instructions to reproduce the results
 
-#### Simulations
+### Simulations
 
-##### Try one trial
+#### Try one trial
 
 To run a FAIR-Linear estimation under the data generating process described in Sec 5.2.1: the unit test task with dimension `d`, sample size `n`, and random seed `s`
 
@@ -27,7 +27,7 @@ python test_fairnn.py --mode 4 --seed [s] --n [n]
 python test_fairnn.py --mode 5 --seed [s] --n [n] 
 ```
 
-##### Result summary
+#### Result summary
 
 Here are the steps to reproduce the results in Fig. 3 & 5:
 
@@ -46,7 +46,7 @@ python unit_test_vis.py --mode 4 --ntrial 50     # plot in Fig. 5b)
 
 The execuation time for lines 2-5 is be 1 day per line in a laptop, and it will save the results in the `saved_result` directory. We also include the simulation result run by our laptop in the `saved_results` directionary, one can directly plot them using lines 7-10.
 
-#### Real data application I: discovery from real physical system
+### Real data application I: discovery from real physical system
 
 We first run the bootstrap and algorithm by $T=100$ replications for various $n$
 
@@ -74,11 +74,11 @@ python app1_lightchamber.py --mode 9 --n 200       # plot Fig. 6e)
 
 
 
-### Customizing your own estimatior
+## Customizing your own estimatior
 
 We also provide an unified FAIR estimation implementation (using gradient descent asecent with Gumbel approximation) if the user can specify the generator/discriminator by inheriting the `FairModel` class. We use a toy sample akin to the thought experiment in the introduction to illustrate how one can customizing the estimator. The sample code can be found at [toy_sample.py](toy_sample.py).
 
-#### Data Generating Process
+### Data Generating Process
 
 We consider the following two-environment model
 $$
@@ -143,7 +143,7 @@ At first glance, we can only see that the best linear predictor using the two va
 
 ![Two-environment data](saved_results/sample_data.png)
 
-#### Inheriting the `FairModel` Class
+### Inheriting the `FairModel` Class
 
 In order to leverage the repo's implementation of the Gumbel approximation, one should inherit the abstract class `FairModel`, it also inherit the `nn.Module` in torch and shares similar logits with that. One should implement the four methods described below
 
@@ -200,7 +200,7 @@ class FairLinearClassification(FairModel):
 
 
 
-#### Run the algorithm and visualize the results
+### Run the algorithm and visualize the results
 
 We also need to specify the training loss $\ell(v, y)$ and loss for evaluation using `torch` and `numpy` as follows
 
