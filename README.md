@@ -90,12 +90,14 @@ We also provide an unified FAIR estimation implementation (using gradient descen
 ### Data Generating Process
 
 We consider the following two-environment model
+
 $$
 X_1^{(e)} \gets& \mathcal{N}(0,1) \\
 Y^{(e)} \gets& \mathrm{Bern}(\sigma(X_1^{(e)})) \\
 Z^{(e)} \gets& \mathrm{Bern}(s^{(e)}) \\
 X_2^{(e)} \gets& (Y^{(e)} \cdot Z^{(e)} + (1-Y^{(e)}) (1-Z^{(e)})) s^{(e)} + \mathcal{N}(0,0.3)
 $$
+
 where $s^{(1)}=0.99$ and $s^{(2)}=0.70$ measures the degree of spuriousness in environment $e\in \{1,2\}$, $\sigma(t)=1/(1+e^{-t})$ and $\mathrm{Bern}(u)$ is a Bernoulli random variable with $\mathbb{E}[\mathrm{Bern}(u)]=u$. Our target is to build a linear classifier on top of $(X_1,X_2)$ to predict $Y$​. 
 
 The above toy synthetic data can be seen as a simplification of the cow-camebl thought experiment. Here $X_1$ is the invariant/core/causal variable that can produce stable prediction to $Y$, $X_2$ is the spurious/reverse causal variable. We also consider the case where $(s^{(1)}-0.5) (s^{(2)}-0.5)>0$, that is, the spurious correlation are in the same direction such that it is impossible to reweight the two environments to make the spurious signal cancelled.
