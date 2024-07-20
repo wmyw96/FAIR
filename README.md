@@ -92,11 +92,13 @@ We also provide an unified FAIR estimation implementation (using gradient descen
 We consider the following two-environment model
 
 $$
-X_1^{(e)} \gets& \mathcal{N}(0,1) \\
-Y^{(e)} \gets& \mathrm{Bern}(\sigma(X_1^{(e)})) \\
-Z^{(e)} \gets& \mathrm{Bern}(s^{(e)}) \\
-X_2^{(e)} \gets& (Y^{(e)} \cdot Z^{(e)} + (1-Y^{(e)}) (1-Z^{(e)})) s^{(e)} + \mathcal{N}(0,0.3)
-$$
+\begin{cases}
+	X_1^{(e)} &\gets \mathcal{N}(0,1) \\
+	Y^{(e)} &\gets \mathrm{Bern}(\sigma(X_1^{(e)})) \\
+	Z^{(e)} &\gets \mathrm{Bern}(s^{(e)}) \\
+	X_2^{(e)} &\gets (Y^{(e)} \cdot Z^{(e)} + (1-Y^{(e)}) (1-Z^{(e)})) s^{(e)} + \mathcal{N}(0,0.3)
+ \end{cases}
+ $$
 
 where $s^{(1)}=0.99$ and $s^{(2)}=0.70$ measures the degree of spuriousness in environment $e\in \{1,2\}$, $\sigma(t)=1/(1+e^{-t})$ and $\mathrm{Bern}(u)$ is a Bernoulli random variable with $\mathbb{E}[\mathrm{Bern}(u)]=u$. Our target is to build a linear classifier on top of $(X_1,X_2)$ to predict $Y$​. 
 
