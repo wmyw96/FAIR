@@ -1,8 +1,8 @@
-# Focused Adverasrial Invariance Regularized Estimation
+# Focused Adversarial Invariance Regularized Estimation
 
 
 
-This repository contains code to reproduce the simulation and real dataset application for our manuscript [Causality Pursuit from Hetereogenous Environments via Neural Adversarial Invariance Learning](https://arxiv.org/pdf/2405.04715). It also provides a unified interface to run the algorithm using user-specified function class and loss.
+This repository contains code to reproduce the simulation and real dataset application in our manuscript [Causality Pursuit from Heterogeneous Environments via Neural Adversarial Invariance Learning](https://arxiv.org/pdf/2405.04715). We also provide a unified implementation and interface to run the algorithm using user-specified function class and loss.
 
 
 To cite this paper:
@@ -53,7 +53,7 @@ python unit_test_vis.py --mode 3 --ntrial 50     # plot in Fig. 5a)
 python unit_test_vis.py --mode 4 --ntrial 50     # plot in Fig. 5b)
 ```
 
-The execuation time for lines 2-5 is be 1 day per line in a laptop, and it will save the results in the `saved_result` directory. We also include the simulation result run by our laptop in the `saved_results` directionary, one can directly plot them using lines 7-10.
+The execution time for lines 2-5 is 1 day per line in a laptop, and it will save the results in the `saved_result` directory. We also include the simulation result run by our laptop in the `saved_results` directory, one can directly plot them using lines 7-10.
 
 ### Real data application I: discovery from real physical system
 
@@ -83,9 +83,9 @@ python app1_lightchamber.py --mode 9 --n 200       # plot Fig. 6e)
 
 
 
-## Customizing your own estimatior
+## Customizing your own estimator
 
-We also provide an unified FAIR estimation implementation (using gradient descent asecent with Gumbel approximation) if the user can specify the generator/discriminator by inheriting the `FairModel` class. We use a toy sample akin to the thought experiment in the introduction to illustrate how one can customizing the estimator. The sample code can be found at [toy_sample.py](toy_sample.py).
+We also provide a unified FAIR estimation implementation (using gradient descent ascent with Gumbel approximation) if the user can specify the generator/discriminator by inheriting the `FairModel` class. We use a toy sample akin to the thought experiment in the introduction to illustrate how one can customize the estimator. The sample code can be found at [toy_sample.py](toy_sample.py).
 
 ### Data Generating Process
 
@@ -100,11 +100,11 @@ $$
  \end{cases}
  $$
 
-where $s^{(1)}=0.99$ and $s^{(2)}=0.70$ measures the degree of spuriousness in environment $e\in \{1,2\}$, $\sigma(t)=1/(1+e^{-t})$ and $\mathrm{Bern}(u)$ is a Bernoulli random variable with $\mathbb{E}[\mathrm{Bern}(u)]=u$. Our target is to build a linear classifier on top of $(X_1,X_2)$ to predict $Y$​. 
+where $s^{(1)}=0.99$ and $s^{(2)}=0.70$ measures the degree of spuriousness in environment $e\in \{1,2\}$, $\sigma(t)=1/(1+e^{-t})$ and $\mathrm{Bern}(u)$ is a Bernoulli random variable with $\mathbb{E}[\mathrm{Bern}(u)]=u$. Our target is to build a linear classifier on top of $(X_1, X_2)$ to predict $Y$. 
 
-The above toy synthetic data can be seen as a simplification of the cow-camebl thought experiment. Here $X_1$ is the invariant/core/causal variable that can produce stable prediction to $Y$, $X_2$ is the spurious/reverse causal variable. We also consider the case where $(s^{(1)}-0.5) (s^{(2)}-0.5)>0$, that is, the spurious correlation are in the same direction such that it is impossible to reweight the two environments to make the spurious signal cancelled.
+The above toy synthetic data can be seen as a simplification of the cow-vs-camebl classification thought experiment. Here $X_1$ is the invariant/core/causal variable that can produce stable prediction to $Y$, $X_2$ is the spurious/reverse causal variable. We also consider the case where $(s^{(1)}-0.5) (s^{(2)}-0.5)>0$, that is, the spurious correlations are in the same direction (either all positive or all negative) such that it is impossible to reweight the two environments to make the spurious signal canceled.
 
-We implement the above data generating process using a `ClassificationSCM` class
+We implement the above data-generating process using a `ClassificationSCM` class
 
 ```python
 import numpy as np
@@ -149,24 +149,24 @@ axs[0].scatter(e1y0x[:, 0], e1y0x[:, 1], color='#ec813b', marker='^')
 axs[1].scatter(e2y1x[:, 0], e2y1x[:, 1], color='#6bb392', marker='+')
 axs[1].scatter(e2y0x[:, 0], e2y0x[:, 1], color='#ec813b', marker='^')
 
-plt.savefig('saved_results/sample_data.pdf')
+plt.savefig('saved_results/sample_data.png')
 ```
 
-At first glance, we can only see that the best linear predictor using the two variables are not the same, but it is hard to tell which variable is invariant.
+At first glance, we can only see that the best linear predictors using the two variables are not the same in the two environments, but it is hard to tell which variable is invariant.
 
 ![Two-environment data](saved_results/sample_data.png)
 
 ### Inheriting the `FairModel` Class
 
-In order to leverage the repo's implementation of the Gumbel approximation, one should inherit the abstract class `FairModel`, it also inherit the `nn.Module` in torch and shares similar logits with that. One should implement the four methods described below
+In order to leverage the repo's implementation of the Gumbel approximation, one should inherit the abstract class `FairModel`. This class inherits the `nn.Module` class in Pytorch and shares similar logits with that. One should implement the four methods described below
 
-- `def __init__(self, num_envs, dim_x, ...)`: in the method, it should define all the nn modules to be used, its input argument should include (1) the number of environments `num_envs` because it should create `num_envs` discriminators; and (2) the input dimension `dim_x`. User can also define their own new introduced arguments. One should set `self.num_envs=num_envs` and `self.dim_x=dim_x` in the method.
-- `def parameters_g(self, log=False)`: in the method,  one should return all the parameters of the predictor `g`. If `g` is a `nn.Module`, it suffices to return `g.parameters()`. One can print the parameters information when `log=True`. 
+- `def __init__(self, num_envs, dim_x, ...)`: in the method, it should define all the `nn.Modules` to be used, its input argument should include (1) the number of environments `num_envs` because it should create `num_envs` discriminators; and (2) the input dimension `dim_x`. User can also define their own newly introduced arguments. One should set `self.num_envs=num_envs` and `self.dim_x=dim_x` in the method.
+- `def parameters_g(self, log=False)`: in the method,  one should return all the parameters of the predictor `g`. If `g` is an `nn.Module`, it suffices to return `g.parameters()`. One can print the parameters information when `log=True`. 
 
-- `def parameters_f(self, log=False)`: in the method,  one should return all the parameters of all the disriminators `f` . One can print the parameters information when `log=True`. 
+- `def parameters_f(self, log=False)`: in the method,  one should return all the parameters of all the discriminators `f`. One can print the parameters information when `log=True`. 
 - `def forward(self, xs, pred=False)`: the forward method should be slightly modified because of the multi-environment setting. We consider the following two cases
-  - `pred=True`: this case is for evaluation and is almost identitical to standard foward method, the input `xs` is a `[n,dim_x]` tensor and it should return a `[n,1]` tensor representing the output. 
-  - `pred=False`: this case is for training, the input `xs` is a list of tensors with shape `[n1,dim_x]`, ..., `[nk,dim_x]` where `k` is the number of environments (`k` shoud be equal to `num_envs`), the output is two `[n,1]` shape tensors with `n=n1+...+nk`. The `i`-th row of the first tensor represents the output of the predictor $g$ in sample `i`, the `i`-th row of the second tensor represents the output of the corresponding $f^{(e)}$ in sample `i`, given the sample `i` is from environment $e$. 
+  - `pred=True`: this case is for evaluation and is almost identical to the standard forward method, the input `xs` is a `[n,dim_x]` tensor and it should return a `[n,1]` tensor representing the output. 
+  - `pred=False`: this case is for training, the input `xs` is a list of tensors with shape `[n1,dim_x]`, ..., `[nk,dim_x]` where `k` is the number of environments (`k` should be equal to `num_envs`), the output is two `[n,1]` shape tensors with `n=n1+...+nk`. The `i`-th row of the first tensor represents the output of the predictor $g$ in sample `i`, and the `i`-th row of the second tensor represents the output of the corresponding $f^{(e)}$ in sample `i`, given the sample `i` is from environment $e$. 
 
 As an example, here we implement the classification module as follows
 
@@ -225,7 +225,7 @@ def misclass(pred_y, y):
 	return 1 - np.mean((pred_y >= 0.5) * y + (pred_y < 0.5) * (1 - y))
 ```
 
-Given the implemented `FairModel`, we are ready to use `FairGumbelAlgo` to get the results. For evaluation, we use the an RCT environment where $s=0.5$ as validation dataset and also use environment with reverse spurious assocation $s=0.05$ as the test dataset. We first create the `model` and dataset 
+Given the implemented `FairModel`, we can call the algorithm implemented in the `FairGumbelAlgo` class. For evaluation, we use an RCT environment with $s=0.5$ as validation dataset and an environment with reverse spurious association $s=0.05$ as the test dataset. We first create the `model` and dataset 
 
 ```python
 model = FairLinearClassification(2, 2)
@@ -237,7 +237,7 @@ valid = [x3], [y3]
 test = [x4], [y4]
 ```
 
-Then we should set the hyper-parameters, the first two rows are standard in gradient descent training. The third row specify that `giters` number of generator gradient descent updates follows from `diters` number of discriminator gradient ascent updates, we found that `diters=3` and `giters=1` works good for most of the cases. The last row specify how we annea the temperature $\tau$ during training. 
+Then we should set the hyper-parameters, the first two rows are standard in gradient descent training. The third row specifies that `giters` number of generator gradient descent updates follows from `diters` number of discriminator gradient ascent updates, we found that `diters=3` and `giters=1` work well for most of the cases. The last row specifies how we anneal the temperature $\tau$ during training. 
 
 ```python
 hyper_params = {
@@ -255,7 +255,7 @@ algo = FairGumbelAlgo(num_envs=2, dim_x=2, model=model, gamma=36, loss=bce_loss,
 packs = algo.run_gumbel((xs, ys), eval_metric=misclass, me_valid_data=valid, me_test_data=test, eval_iter=3000, log=True)
 ```
 
-In the first row, we specify the number of environments, feature dimension, causal hyper-parameter $\gamma$, and other traininig hyper-parameters. We also plug-in our implemented `FairModel` `model` and loss `bce_loss` as input arguments. The second row runs the gradient descent ascent with Gumbel approximation. It show the following logs:
+In the first row, we specify the number of environments, feature dimension, causal hyper-parameter $\gamma$, and other training hyper-parameters. We also plug in our implemented `FairModel` `model` and loss `bce_loss` as input arguments. The second row runs the gradient descent ascent with Gumbel approximation. It shows the following logs:
 
 ```
 FairLinearClassification Predictor Module Parameters:
@@ -299,14 +299,14 @@ gate logits = [0.99, 0.04,]
 gate est = [1.00, 0.08,]
 ```
 
-One can visualize the dynamics of gumbel logits during training using the method in `utils.py`
+One can visualize the dynamics of Gumbel logits during training using the method in `utils.py`
 
 ```python
 from utils import print_gate_during_training
-print_gate_during_training(2, ([0], [1], []), packs['gate_rec'], 'saved_results/sample_gate.pdf')
+print_gate_during_training(2, ([0], [1], []), packs['gate_rec'], 'saved_results/sample_gate.png')
 ```
 
-The result is as follows, the blue line represent that of the invariant feature and the red line represent that of the spurious feature. 
+The result is as follows, the blue line represents that of the invariant feature and the red line represents that of the spurious feature. 
 
 ![Gate Logits Evolution Dynamics](saved_results/sample_gate.png)
 
