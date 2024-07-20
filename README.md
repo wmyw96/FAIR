@@ -5,6 +5,15 @@
 This repository contains code to reproduce the simulation and real dataset application for our manuscript [Causality Pursuit from Hetereogenous Environments via Neural Adversarial Invariance Learning](https://arxiv.org/pdf/2405.04715). It also provides a unified interface to run the algorithm using user-specified function class and loss.
 
 
+To cite this paper:
+```bibtex
+@article{gu2024causality,
+  title={Causality Pursuit from Heterogeneous Environments via Neural Adversarial Invariance Learning},
+  author={Gu, Yihong and Fang, Cong and B{\"u}hlmann, Peter and Fan, Jianqing},
+  journal={arXiv preprint arXiv:2405.04715},
+  year={2024}
+}
+```
 
 ## Instructions to reproduce the results
 
