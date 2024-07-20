@@ -117,13 +117,11 @@ hd = obs_data[0].head()
 pd.options.display.max_columns = None
 
 for e in range(len(obs_data)):
-	#x = obs_data[e][['red', 'green', 'blue', 'pol_1', 'pol_2', 'vis_3']].to_numpy()
 	x = obs_data[e][['red', 'green', 'blue', 'pol_1', 'pol_2', 'vis_1', 'vis_2', 'vis_3', 'ir_1', 'ir_2', 'current']].to_numpy()
 	y = obs_data[e][['ir_3']].to_numpy()
 	xs.append(x)
 	ys.append(y)
 
-#xs_train, ys_train = [xs[0], np.concatenate([xs[1], xs[1], xs[4], xs[4], xs[2], xs[3]], 0)], [ys[0], np.concatenate([ys[1], ys[1], ys[4], ys[4], ys[2], ys[3]], 0)]
 xs_train, ys_train = [xs[0], np.concatenate([xs[1], xs[2][:500,:], xs[3][:500,:], xs[4][:500,:], xs[5][:500,:]], 0)], \
 						[ys[0], np.concatenate([ys[1], ys[2][:500,:], ys[3][:500,:], ys[4][:500,:], ys[5][:500,:]], 0)]
 xs_test, ys_test = [xs[6], xs[7], xs[8], xs[9], xs[10]], [ys[6], ys[7], ys[8], ys[9], ys[10]]
@@ -159,11 +157,8 @@ if args.mode == 1:
 elif args.mode == 2:
 	xstr, ystr, validx, validy = train_valid_split(xs1, ys1, n_train)
 	px = np.concatenate(xstr, 0)
-	#print(np.matmul(px.T, px) / np.shape(px)[0])
-	#print(np.matmul(px.T, np.concatenate(ystr, 0)) / np.shape(px)[0])
 
 	for e in range(5):
-		#print(np.mean(xstt[e][:, 5+e], 0))
 		xstt[e][:, 5+e] -= np.mean(xstt[e][:, 5+e])
 
 	eval_data = (validx, validy, xstt, ystt)
@@ -284,8 +279,8 @@ elif args.mode == 3:
 		print(f'Running Case: exp_id = {exp_id}, secs = {end_time - start_time}s\n')
 
 
-	np.save(f'lightchamber{args.n}_risk.npy', risk)
-	np.save(f'lightchamber{args.n}_var.npy', myvarsel)
+	np.save(f'saved_results/lightchamber{args.n}_risk.npy', risk)
+	np.save(f'saved_results/lightchamber{args.n}_var.npy', myvarsel)
 
 elif args.mode == 4:
 	n_rep = args.nrep
@@ -307,60 +302,8 @@ elif args.mode == 4:
 		aug_data = augument_xye(xstr, ystr, n_train)
 		np.savetxt(f"chamber_tmp/data_tmp_{exp_id}.csv", aug_data, delimiter=",")
 
-elif args.mode == 5:
-	var_sel = np.load(f'lightchamber{args.n}_var.npy')
-
-	matrix = np.mean(var_sel, 0)
-	#print(result)
-
-	for e in range(args.nrep):
-		matrix[2:, :] += np.genfromtxt(f'chamber_tmp/result_tmp_{e}.csv', delimiter=',')
-
-	matrix[2:, :] /= args.nrep
-
-
-	import matplotlib.pyplot as plt
-	from matplotlib import rc
-
-	plt.rcParams["font.family"] = "Times New Roman"
-	plt.rc('font', size=12)
-	rc('text', usetex=True)
-
-	# Define color maps for each column
-	colormaps = [colors[2]] * 5 + [colors[3]] * 2 + [colors[0]] + [colors[3]] * 3
-
-	fig, ax = plt.subplots()
-
-	names = [r'$R$', r'$G$', r'$B$', r'$\theta_1$', r'$\theta_2$', r'$\tilde{V}_1$', r'$\tilde{V}_2$', r'$\tilde{V}_3$', r'$\tilde{I}_1$', r'$\tilde{I}_2$', r'$\tilde{C}$']
-	for j in range(matrix.shape[1]):
-		ax.text(j * 2 + 1, -1, str(names[j]), va='center', ha='center', color=colormaps[j])
-	# Loop over data dimensions and create color mappings and text annotations
-	for j in range(matrix.shape[1]):
-		for i in range(matrix.shape[0]):
-			value = round(matrix[i, j], 2)
-			ax.add_patch(plt.Rectangle((j * 2, i * 2), 2, 2, facecolor=colormaps[j], alpha=0.5 * value, edgecolor='none'))
-			ax.text(j * 2 + 1, i * 2 + 1, str(value), va='center', ha='center', color=colormaps[j])
-	ax.text(-4, 1, 'FAIR-Linear', va='center', ha='center')
-	ax.text(-4, 3, 'FAIR-NN', va='center', ha='center')
-	ax.text(-4, 5, 'ForestVarSel', va='center', ha='center')
-	ax.text(-4, 7, 'NonlinearICP', va='center', ha='center')
-	ax.text(-8, 5.5, r'$n=1000$', rotation='vertical')
-
-
-	# Set the limits and aspect of the plot
-	ax.set_xlim(-5, matrix.shape[1] * 2)
-	ax.set_ylim(-2, matrix.shape[0] * 2)
-	ax.set_aspect('equal')
-
-	# Hide the axes
-	ax.axis('off')
-
-	# Display the plot
-	plt.gca().invert_yaxis()
-	plt.show()
-
 elif args.mode == 6:
-	risk = np.load(f'lightchamber{args.n}_risk.npy')
+	risk = np.load(f'saved_results/lightchamber{args.n}_risk.npy')
 	risk = np.mean(risk, 0)
 	print(risk)
 
@@ -430,13 +373,13 @@ elif args.mode == 6:
 	#ax.plot(angles, values, colors[5], linewidth=1, linestyle='solid', label="PoolLS-Linear")
 
 	plt.legend(loc='upper right', bbox_to_anchor=(1.3, 1.15))	
-	plt.show()
+	plt.savefig("saved_results/fig6b.pdf", bbox_inches='tight')
 
 elif args.mode == 7:
 	vec_n = [200, 500, 1000, 2000]
 	worst_risk = np.zeros((8, len(vec_n)))
 	for n_id in range(len(vec_n)):
-		risk = np.max(np.load(f'lightchamber{vec_n[n_id]}_risk.npy'), 2)
+		risk = np.max(np.load(f'saved_results/lightchamber{vec_n[n_id]}_risk.npy'), 2)
 		worst_risk[:, n_id] = np.mean(risk, 0)
 
 	lines = ['solid', 'solid', 'dotted', 'dashed', 'dashed']
@@ -464,26 +407,26 @@ elif args.mode == 7:
 	#ax1.set_xscale("log")
 
 	ax1.legend(loc='best')
-	plt.show()
+	fig.savefig("saved_results/fig6c.pdf", bbox_inches='tight')
 
 
 elif args.mode == 8:
-	var_sel = np.load(f'lightchamber1000_var.npy')
+	var_sel = np.load(f'saved_results/lightchamber1000_var.npy')
 
 	matrix = np.mean(var_sel, 0)
-	#print(result)
 
-	for e in range(args.nrep):
-		matrix[2:, :] += np.genfromtxt(f'chamber_tmp/result_tmp_{e}.csv', delimiter=',')
+	matrix2 = np.genfromtxt(f'saved_results/chamber_icp.csv', delimiter=',')
+	matrix2 = np.mean(matrix2, 0)
 
-	matrix[2:, :] /= args.nrep
+	matrix[2, :] = matrix2[0:11]
+	matrix[3, :] = matrix2[11:]
 
 	matrix = np.concatenate([matrix, np.zeros((3, dim_x))], 0)
 
 	vec_n = [200, 500, 2000]
 	
 	for n_id in range(len(vec_n)):
-		matrix[n_id+4,:] = np.mean(np.load(f'lightchamber{vec_n[n_id]}_var.npy'), 0)[1,:]
+		matrix[n_id+4,:] = np.mean(np.load(f'saved_results/lightchamber{vec_n[n_id]}_var.npy'), 0)[1,:]
 
 	import matplotlib.pyplot as plt
 	from matplotlib import rc
@@ -531,10 +474,10 @@ elif args.mode == 8:
 
 	# Display the plot
 	plt.gca().invert_yaxis()
-	plt.show()
+	fig.savefig("saved_results/fig6d.pdf", bbox_inches='tight')
 
 elif args.mode == 9:
-	var_sel = np.load(f'lightchamber{args.n}_var.npy')[:,1,:]
+	var_sel = np.load(f'saved_results/lightchamber{args.n}_var.npy')[:,1,:]
 
 	groups = [np.sum(np.square(var_sel[:, :] - np.array([[1] * 5 + [0] * 6])), 1) > 0,
 		var_sel[:, 7] > 0,
@@ -547,7 +490,7 @@ elif args.mode == 9:
 	rc('text', usetex=True)
 	fig, axs = plt.subplots(3, 1, figsize=(4, 5), sharex=True, sharey=True)
 	fig.subplots_adjust(hspace=0, left=0.17, right=0.85)
-	risks = 1-np.max(np.load(f'lightchamber{args.n}_risk.npy')[:,[5,4,6],:], 2)
+	risks = 1-np.max(np.load(f'saved_results/lightchamber{args.n}_risk.npy')[:,[5,4,6],:], 2)
 	
 	for i in range(3):
 		riskt = risks[groups[i], :]
@@ -558,19 +501,4 @@ elif args.mode == 9:
 	axs[1].text(3.8, 0.7, r"(ii)$~8 \in \hat{S}$", va='center', ha='center', rotation='vertical', size=15)
 	axs[2].text(3.8, 0.7, r"(iii)$~[5] \setminus \hat{S} \neq \emptyset$", va='center', ha='center', rotation='vertical', size=15)
 
-	fig.savefig("analysis.pdf", bbox_inches='tight')
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+	fig.savefig("saved_results/fig6e.pdf", bbox_inches='tight')

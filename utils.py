@@ -65,3 +65,64 @@ def print_vector(vec, color):
 		print_str += fore_fromhex(vec[i], color[i])
 	print_str += ']'
 	print(print_str)
+
+
+def broadcast_beta_vector(beta_restricted, var_inds, p):
+	beta_broadcast = np.zeros(p)
+	if len(var_inds) == 1:
+		beta_broadcast[var_inds[0]] = beta_restricted
+		return beta_broadcast
+	for i, ind in enumerate(var_inds):
+		beta_broadcast[ind] = beta_restricted[i]
+	return beta_broadcast
+
+
+def print_gate_during_training(dim_x, graph_sets, gate, tofile=None):
+	parent_set, child_set, offspring_set = graph_sets
+	import matplotlib.pyplot as plt
+	from matplotlib import rc
+	from numpy import genfromtxt
+
+	plt.rcParams["font.family"] = "Times New Roman"
+	plt.rc('font', size=20)
+	rc('text', usetex=True)
+
+
+	color_tuple = [
+		'#ae1908',  # red
+		'#ec813b',  # orange
+		'#05348b',  # dark blue
+		'#9acdc4',  # pain blue
+	]
+
+	rsp = []
+	for i in range(dim_x):
+		if i in parent_set:
+			rsp.append(2)
+		elif i in child_set:
+			rsp.append(0)
+		elif i in offspring_set:
+			rsp.append(1)
+		else:
+			rsp.append(3)
+	rsp = np.array(rsp)
+	color_rsp = [color_tuple[i] for i in rsp]
+
+
+	plt.figure(figsize=(6, 4))
+	ax1 = plt.subplot(1, 1, 1)
+
+	it_display = np.shape(gate)[0]
+	it_arr = np.arange(it_display)
+
+	for i in range(dim_x):
+		ax1.plot(it_arr * 100, gate[:it_display, i], color=color_tuple[rsp[i]])
+
+	ax1.set_xlabel(r'Iterations')
+	ax1.set_ylabel('sigmoid(logits)')
+	plt.ylim(0, 1)
+
+	if tofile is None:
+		plt.show()
+	else:
+		plt.savefig(tofile, bbox_inches='tight')

@@ -483,8 +483,6 @@ def fairnn_sgd_gumbel_uni(features, responses, eval_data=None, depth_g=1, width_
 			with torch.no_grad():
 				logits = model_var.get_logits_numpy()
 				gate_rec.append(sigmoid(logits))
-			if log:
-				print(logits)
 			loss_rec.append(np.mean(my_loss, 0))
 
 		if (it + 1) % eval_iter == 0:
@@ -499,16 +497,26 @@ def fairnn_sgd_gumbel_uni(features, responses, eval_data=None, depth_g=1, width_
 			valid_loss = np.mean(np.square(out - valid_y))
 			test_loss = []
 			# calculate test loss
-			for e in range(len(test_x_ths)):
+
+			if isinstance(test_x_ths, list):
+				for e in range(len(test_x_ths)):
+					preds = []
+					gates = []
+					for k in range(gate_samples):
+						gate = model_var.generate_mask((tau_logits, tau))
+						pred = model(gate * test_x_ths[e], pred=True)
+						preds.append(pred.detach().cpu().numpy())
+						gates.append((gate).detach().cpu().numpy() + 0.0)
+					out = sum(preds) / len(preds)
+					test_loss.append(np.mean(np.square(out - test_y[e])))
+			else:
 				preds = []
-				gates = []
 				for k in range(gate_samples):
 					gate = model_var.generate_mask((tau_logits, tau))
-					pred = model(gate * test_x_ths[e], pred=True)
+					pred = model(gate * test_x_ths, pred=True)
 					preds.append(pred.detach().cpu().numpy())
-					gates.append((gate).detach().cpu().numpy() + 0.0)
 				out = sum(preds) / len(preds)
-				test_loss.append(np.mean(np.square(out - test_y[e])))
+				test_loss = [np.mean(np.square(out - test_y))]
 
 			loss_rec = [[valid_loss] + test_loss]
 			if log:
@@ -629,9 +637,13 @@ def fairnn_sgd_gumbel_refit(features, responses, mask, eval_data, depth_g=1, wid
 			# calculate test loss
 			test_loss = []
 			gate = model_var.generate_mask()
-			for e in range(len(test_x_ths)):
-				out = model(gate * test_x_ths[e], pred=True).detach().cpu().numpy()
-				test_loss.append(np.mean(np.square(out - test_y[e])))
+			if isinstance(test_x_ths, list):
+				for e in range(len(test_x_ths)):
+					out = model(gate * test_x_ths[e], pred=True).detach().cpu().numpy()
+					test_loss.append(np.mean(np.square(out - test_y[e])))
+			else:
+				out = model(gate * test_x_ths, pred=True).detach().cpu().numpy()
+				test_loss = [np.mean(np.square(out - test_y))]
 
 			loss_rec.append([valid_loss] + test_loss)
 			if log:

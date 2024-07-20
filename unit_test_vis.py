@@ -157,7 +157,6 @@ if args.mode == 2:
 
 if args.mode == 3:
 	results = np.load('saved_results/unit_test_3.npy')
-	print(np.shape(results2))
 	num_n = results.shape[0]
 	num_sml = results.shape[1]
 

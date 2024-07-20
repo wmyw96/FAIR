@@ -33,6 +33,7 @@ if args.mode == 1:
 		for t in range(num_repeats):
 			start_time = time.time()
 			np.random.seed(t)
+			torch.manual_seed(t)
 			#generate random graph with 20 nodes
 			models, true_coeff, parent_set, child_set, offspring_set = \
 				get_linear_SCM(num_vars=71, num_envs=2, y_index=35, 
@@ -100,6 +101,7 @@ if args.mode == 2:
 		for t in range(num_repeats):
 			start_time = time.time()
 			np.random.seed(t)
+			torch.manual_seed(t)
 			#generate random graph with 20 nodes
 			models, true_coeff, parent_set, child_set, offspring_set = \
 				get_linear_SCM(num_vars=16, num_envs=2, y_index=8, 
@@ -143,7 +145,7 @@ if args.mode == 2:
 
 
 if args.mode == 3:
-	candidate_n = [500, 1000, 2000, 5000, 10000]
+	candidate_n = [1000, 2000, 3000, 5000]
 
 	num_repeats = args.ntrial
 
@@ -155,6 +157,7 @@ if args.mode == 3:
 		for t in range(num_repeats):
 			start_time = time.time()
 			np.random.seed(t)
+			torch.manual_seed(t)
 
 			print(f'================ Test ID = {t}, n = {n} ================')
 			dim_x = 26
@@ -180,7 +183,7 @@ if args.mode == 3:
 			for i in parent_set:
 				mask4[i] = 1.0
 			packs4 = fairnn_sgd_gumbel_refit(xs, ys, mask4, eval_data, learning_rate=lr, niters=riter, 
-											batch_size=batch_size, log=False)
+											depth_g=2, width_g=128, batch_size=batch_size, log=False)
 			eval_loss4 = packs4['loss_rec']
 			loss4 = eval_loss4[np.argmin(eval_loss4[:, 0]), 1]
 			print(f'Oracle Test Error: {loss4}')
@@ -189,7 +192,7 @@ if args.mode == 3:
 			# Report ERM estimation performance
 			mask3 = np.ones((dim_x, ))
 			packs3 = fairnn_sgd_gumbel_refit(xs, ys, mask3, eval_data, learning_rate=lr, niters=riter, 
-											batch_size=batch_size, log=False)
+											depth_g=2, width_g=128, batch_size=batch_size, log=False)
 			eval_loss3 = packs3['loss_rec']
 			loss3 = eval_loss3[np.argmin(eval_loss3[:, 0]), 1]
 			print(f'ERM Test Error: {loss3}')
@@ -215,7 +218,7 @@ if args.mode == 3:
 
 			# FAIR-Gumbel Refit performance
 			packs2 = fairnn_sgd_gumbel_refit(xs, ys, mask, eval_data, learning_rate=lr, niters=riter, 
-								batch_size=batch_size, log=False)
+								depth_g=2, width_g=128, batch_size=batch_size, log=False)
 			eval_loss2 = packs2['loss_rec']
 			loss2 = eval_loss2[np.argmin(eval_loss2[:, 0]), 1]
 			print('Refit Test Error: {}'.format(loss2))
@@ -244,6 +247,7 @@ if args.mode == 4:
 		for t in range(num_repeats):
 			start_time = time.time()
 			np.random.seed(t)
+			torch.manual_seed(t)
 
 			print(f'================ Test ID = {t}, n = {n} ================')
 			dim_x = 26
@@ -271,7 +275,7 @@ if args.mode == 4:
 			for i in parent_set:
 				mask4[i] = 1.0
 			packs4 = fairnn_sgd_gumbel_refit(xs, ys, mask4, eval_data, learning_rate=lr, niters=riter, 
-											batch_size=batch_size, log=False)
+											depth_g=2, width_g=128, batch_size=batch_size, log=False)
 			eval_loss4 = packs4['loss_rec']
 			loss4 = eval_loss4[np.argmin(eval_loss4[:, 0]), 1]
 			print(f'Oracle Test Error: {loss4}')
@@ -280,7 +284,7 @@ if args.mode == 4:
 			# Report ERM estimation performance
 			mask3 = np.ones((dim_x, ))
 			packs3 = fairnn_sgd_gumbel_refit(xs, ys, mask3, eval_data, learning_rate=lr, niters=riter, 
-											batch_size=batch_size, log=False)
+											depth_g=2, width_g=128, batch_size=batch_size, log=False)
 			eval_loss3 = packs3['loss_rec']
 			loss3 = eval_loss3[np.argmin(eval_loss3[:, 0]), 1]
 			print(f'ERM Test Error: {loss3}')
@@ -306,7 +310,7 @@ if args.mode == 4:
 
 			# FAIR-Gumbel Refit performance
 			packs2 = fairnn_sgd_gumbel_refit(xs, ys, mask, eval_data, learning_rate=lr, niters=riter, 
-								batch_size=batch_size, log=False)
+								depth_g=2, width_g=128, batch_size=batch_size, log=False)
 			eval_loss2 = packs2['loss_rec']
 			loss2 = eval_loss2[np.argmin(eval_loss2[:, 0]), 1]
 			print('Refit Test Error: {}'.format(loss2))
