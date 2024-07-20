@@ -36,7 +36,7 @@ axs[0].scatter(e1y0x[:, 0], e1y0x[:, 1], color='#ec813b', marker='^')
 axs[1].scatter(e2y1x[:, 0], e2y1x[:, 1], color='#6bb392', marker='+')
 axs[1].scatter(e2y0x[:, 0], e2y0x[:, 1], color='#ec813b', marker='^')
 
-plt.savefig('saved_results/sample_data.pdf')
+plt.savefig('saved_results/sample_data.png')
 
 
 from methods.fair_algo import *
@@ -107,4 +107,4 @@ algo = FairGumbelAlgo(2, 2, model, 36, bce_loss, hyper_params)
 packs = algo.run_gumbel((xs, ys), eval_metric=misclass, me_valid_data=valid, me_test_data=test, eval_iter=3000, log=True)
 
 from utils import print_gate_during_training
-print_gate_during_training(2, ([0], [1], []), packs['gate_rec'], 'saved_results/sample_gate.pdf')
+print_gate_during_training(2, ([0], [1], []), packs['gate_rec'], 'saved_results/sample_gate.png')
