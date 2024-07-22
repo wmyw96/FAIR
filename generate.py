@@ -52,8 +52,8 @@ def split(l,rate):
 
 #generate spilt result and image 
 def generate(r_water,r_land,n_sample_train,n_sample_test,splitrate=0.7,model_name='resnet50',cub_dir = './CUB',places_dir = './data_large'):
-    #r_water: 水鸟在水环境的概率
-    #r_land: 陆鸟在陆环境的概率
+    #r_water: water bird in water environment
+    #r_land: land bird in land environment
     #model_name: resnet50, resnet34, wideresnet50
     
     
@@ -227,8 +227,7 @@ def generate(r_water,r_land,n_sample_train,n_sample_test,splitrate=0.7,model_nam
 
 
 def generate_train(r_water,r_land,n_sample_train,model_name='resnet50',cub_dir = './CUB',places_dir = './data_large'):
-    #r_water: 水鸟在水环境的概率
-    #r_land: 陆鸟在陆环境的概率
+
     #model_name: resnet50, resnet34, wideresnet50
     
     
@@ -313,8 +312,6 @@ def generate_train(r_water,r_land,n_sample_train,model_name='resnet50',cub_dir =
     return x,y,z
 
 def generate_test(r_water,r_land,n_sample_train,model_name='resnet50',cub_dir = './CUB',places_dir = './data_large'):
-    #r_water: 水鸟在水环境的概率
-    #r_land: 陆鸟在陆环境的概率
     #model_name: resnet50, resnet34, wideresnet50
     
     
