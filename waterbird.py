@@ -10,6 +10,11 @@ from sklearn.linear_model import Lasso,LogisticRegression
 from dro.run_dro import run_dro
 from irm.irm import run_irm
 
+
+seed=10
+np.random.seed(seed)
+torch.manual_seed(seed)  
+
 def acc(traindata,testdata):
     n = len(traindata)
     num = 0
