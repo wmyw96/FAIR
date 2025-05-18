@@ -1,4 +1,4 @@
-from methods.fair_gumbel_one import *
+from methods.fair_gumbel import *
 import numpy as np
 import torch
 import torch.nn.modules as nn
