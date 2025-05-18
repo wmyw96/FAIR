@@ -55,7 +55,7 @@ def varset_string_to_numpy(set_str):
 	for i in range(len(set_str)):
 		if set_str[i] == '1':
 			var_set.append(i)
-	return np.array(var_set, dtype=np.int)
+	return np.array(var_set, dtype=np.int32)
 
 
 def set_to_string(var_set, dim_x):
