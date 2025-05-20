@@ -107,16 +107,16 @@ def generate(r_water,r_land,n_sample_train,n_sample_test,splitrate=0.7,model_nam
             lb.append(species_name)
     train_lb,test_lb=split(lb,splitrate)
     train_wb,test_wb=split(wb,splitrate)
-    with open('trainlb.txt','w') as f:
+    with open('train_lb_name.txt','w') as f:
           for i in train_lb:
                 f.write(i +'\n')
-    with open('testlb.txt','w') as f:
+    with open('test_lb_name.txt','w') as f:
           for i in test_lb:
                 f.write(i +'\n')
-    with open('trainwb.txt','w') as f:
+    with open('train_wb_name.txt','w') as f:
           for i in train_wb:
                 f.write(i +'\n')
-    with open('testwb.txt','w') as f:
+    with open('test_wb_name.txt','w') as f:
           for i in test_wb:
                 f.write(i +'\n')
     
@@ -248,12 +248,12 @@ def generate_train(r_water,r_land,n_sample_train,model_name='resnet50',cub_dir =
     
     train_wb=[]
     train_lb=[]
-    with open('trainlb.txt','r') as f:
+    with open('train_lb_name.txt','r') as f:
         for line in f:
             line=line.strip('\n')
             train_lb.append(line)
 
-    with open('trainwb.txt','r') as f:
+    with open('train_wb_name.txt','r') as f:
           for line in f:
             line=line.strip('\n')
             train_wb.append(line)
@@ -332,12 +332,12 @@ def generate_test(r_water,r_land,n_sample_train,model_name='resnet50',cub_dir = 
     
     train_wb=[]
     train_lb=[]
-    with open('testlb.txt','r') as f:
+    with open('test_lb_name.txt','r') as f:
         for line in f:
             line=line.strip('\n')
             train_lb.append(line)
 
-    with open('testwb.txt','r') as f:
+    with open('test_wb_name.txt','r') as f:
           for line in f:
             line=line.strip('\n')
             train_wb.append(line)
