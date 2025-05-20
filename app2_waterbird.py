@@ -72,10 +72,12 @@ def main():
 
     # Settings
     parser.add_argument( '--method', choices=['LASSO','FAIR','GroupDRO','IRM'], default='FAIR')
-    parser.add_argument( '--nstart',default=10)
+    parser.add_argument( '--nstart', type=int, default=10)
+    parser.add_argument( '--sample', type=int, default=30000)
     args = parser.parse_args()   
-    mode =args.method
-    nstart=args.nstart
+    mode = args.method
+    nstart = args.nstart
+    sample = args.sample
     r_water_list=[0.95,0.75,0.5]
     r_land_list=[0.9,0.7,0.5]
     x=[]
@@ -135,7 +137,7 @@ def main():
         res=np.zeros((nstart,hyper_params['niters']//eval_freq))
         for i in range(nstart):
             print("restart:",i)
-            random_row=np.random.choice(x[0].shape[0],size=30000,replace=False)
+            random_row=np.random.choice(x[0].shape[0],size=sample,replace=False)
             valid=[ torch.from_numpy(x_test).to(torch.float32).cuda()],[torch.from_numpy(y_test).view(-1,1).cuda()]	
             test=[ torch.from_numpy(x_test).to(torch.float32).cuda()],[torch.from_numpy(y_test).view(-1,1).cuda()]
             model = FairLinearClassification(2, 500)
@@ -153,7 +155,7 @@ def main():
     elif(mode=='IRM'):
         for i in range(nstart):
                 print("restart:",i)
-                random_row=np.random.choice(x[0].shape[0],size=30000,replace=False)
+                random_row=np.random.choice(x[0].shape[0],size=sample,replace=False)
                 run_irm(envs=[{'images': torch.from_numpy(x[0][random_row]).to(torch.float32).cuda(),'labels': torch.from_numpy(y[0][random_row]).view(-1,1).cuda()},
                 {'images': torch.from_numpy(x[1][random_row]).to(torch.float32).cuda(),'labels': torch.from_numpy(y[1][random_row]).view(-1,1).cuda()},
                 {'images': torch.from_numpy(x_test).to(torch.float32).cuda(),'labels': torch.from_numpy(y_test).view(-1,1).cuda()}])
