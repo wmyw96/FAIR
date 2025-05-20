@@ -250,12 +250,12 @@ def generate_train(r_water,r_land,n_sample_train,model_name='resnet50',cub_dir =
     train_lb=[]
     with open('trainlb.txt','r') as f:
         for line in f:
-            line=line.strip('\n')#删除换行符
+            line=line.strip('\n')
             train_lb.append(line)
 
     with open('trainwb.txt','r') as f:
           for line in f:
-            line=line.strip('\n')#删除换行符
+            line=line.strip('\n')
             train_wb.append(line)
     
     if model_name=='resnet50':
@@ -334,12 +334,12 @@ def generate_test(r_water,r_land,n_sample_train,model_name='resnet50',cub_dir = 
     train_lb=[]
     with open('testlb.txt','r') as f:
         for line in f:
-            line=line.strip('\n')#删除换行符
+            line=line.strip('\n')
             train_lb.append(line)
 
     with open('testwb.txt','r') as f:
           for line in f:
-            line=line.strip('\n')#删除换行符
+            line=line.strip('\n')
             train_wb.append(line)
     
     if model_name=='resnet50':
@@ -397,12 +397,12 @@ def generate_test(r_water,r_land,n_sample_train,model_name='resnet50',cub_dir = 
     #x=resnet(images)
     return x,y,z
 mode='train'
-rwater=0.75
-rland=0.7
+rwater=0.5
+rland=0.5
+num=30000
 if mode=='generate':
-    x0,y0,z0=generate_train(rwater,rland,30000)
+    x0,y0,z0=generate(rwater,rland,num)
 elif mode=='train':
-    x0,y0,z0=generate_train(rwater,rland,30000)
+    x0,y0,z0=generate_train(rwater,rland,num)
 elif mode=='test':
-    x0,y0,z0=generate_train(rwater,rland,30000)    
-print(x0,y0,z0)
+    x0,y0,z0=generate_test(rwater,rland,num)    
