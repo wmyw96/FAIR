@@ -150,7 +150,7 @@ def main():
             writer=csv.writer(f)
             writer.writerows(res)
     elif(mode=='GroupDRO'):
-        for i in range(i):
+        for i in range(nstart):
             run_dro()
     elif(mode=='IRM'):
         for i in range(nstart):
