@@ -51,7 +51,7 @@ def split(l,rate):
     return train,test
 
 #generate spilt result and image 
-def generate(r_water,r_land,n_sample_train,n_sample_test,splitrate=0.7,model_name='resnet50',cub_dir = './CUB',places_dir = './data_large'):
+def generate(r_water,r_land,n_sample_train,n_sample_test,splitrate=0.7,model_name='resnet50',cub_dir = './CUB',places_dir = './data_large',content_dir=''):
     #r_water: water bird in water environment
     #r_land: land bird in land environment
     #model_name: resnet50, resnet34, wideresnet50
@@ -107,16 +107,16 @@ def generate(r_water,r_land,n_sample_train,n_sample_test,splitrate=0.7,model_nam
             lb.append(species_name)
     train_lb,test_lb=split(lb,splitrate)
     train_wb,test_wb=split(wb,splitrate)
-    with open('trainlb.txt','w') as f:
+    with open(content_dir+'train_lb_name.txt','w') as f:
           for i in train_lb:
                 f.write(i +'\n')
-    with open('testlb.txt','w') as f:
+    with open(content_dir+'test_lb_name.txt','w') as f:
           for i in test_lb:
                 f.write(i +'\n')
-    with open('trainwb.txt','w') as f:
+    with open(content_dir+'train_wb_name.txt','w') as f:
           for i in train_wb:
                 f.write(i +'\n')
-    with open('testwb.txt','w') as f:
+    with open(content_dir+'test_wb_name.txt','w') as f:
           for i in test_wb:
                 f.write(i +'\n')
     
@@ -226,7 +226,7 @@ def generate(r_water,r_land,n_sample_train,n_sample_test,splitrate=0.7,model_nam
     return x,y,z
 
 
-def generate_train(r_water,r_land,n_sample_train,model_name='resnet50',cub_dir = './CUB',places_dir = './data_large'):
+def generate_train(r_water,r_land,n_sample_train,model_name='resnet50',cub_dir = './CUB',places_dir = './data_large',content_dir=''):
 
     #model_name: resnet50, resnet34, wideresnet50
     
@@ -248,14 +248,14 @@ def generate_train(r_water,r_land,n_sample_train,model_name='resnet50',cub_dir =
     
     train_wb=[]
     train_lb=[]
-    with open('trainlb.txt','r') as f:
+    with open(content_dir+'train_lb_name.txt','r') as f:
         for line in f:
-            line=line.strip('\n')#删除换行符
+            line=line.strip('\n')
             train_lb.append(line)
 
-    with open('trainwb.txt','r') as f:
+    with open(content_dir+'train_wb_name.txt','r') as f:
           for line in f:
-            line=line.strip('\n')#删除换行符
+            line=line.strip('\n')
             train_wb.append(line)
     
     if model_name=='resnet50':
@@ -311,7 +311,7 @@ def generate_train(r_water,r_land,n_sample_train,model_name='resnet50',cub_dir =
     np.save(f'./res/train/rwater_{r_water}_rland_{r_land}_z.npy',z)
     return x,y,z
 
-def generate_test(r_water,r_land,n_sample_train,model_name='resnet50',cub_dir = './CUB',places_dir = './data_large'):
+def generate_test(r_water,r_land,n_sample_train,model_name='resnet50',cub_dir = './CUB',places_dir = './data_large',content_dir=''):
     #model_name: resnet50, resnet34, wideresnet50
     
     
@@ -332,14 +332,14 @@ def generate_test(r_water,r_land,n_sample_train,model_name='resnet50',cub_dir = 
     
     train_wb=[]
     train_lb=[]
-    with open('testlb.txt','r') as f:
+    with open(content_dir+'test_lb_name.txt','r') as f:
         for line in f:
-            line=line.strip('\n')#删除换行符
+            line=line.strip('\n')
             train_lb.append(line)
 
-    with open('testwb.txt','r') as f:
+    with open(content_dir+'test_wb_name.txt','r') as f:
           for line in f:
-            line=line.strip('\n')#删除换行符
+            line=line.strip('\n')
             train_wb.append(line)
     
     if model_name=='resnet50':
@@ -397,12 +397,15 @@ def generate_test(r_water,r_land,n_sample_train,model_name='resnet50',cub_dir = 
     #x=resnet(images)
     return x,y,z
 mode='train'
-rwater=0.75
-rland=0.7
+rwater=0.5
+rland=0.5
+num=30000
+cub_dir = './CUB'
+places_dir = './data_large'
+content_dir=''
 if mode=='generate':
-    x0,y0,z0=generate_train(rwater,rland,30000)
+    x0,y0,z0=generate(rwater,rland,num,cub_dir=cub_dir,places_dir=places_dir,content_dir=content_dir)
 elif mode=='train':
-    x0,y0,z0=generate_train(rwater,rland,30000)
+    x0,y0,z0=generate_train(rwater,rland,num,cub_dir=cub_dir,places_dir=places_dir,content_dir=content_dir)
 elif mode=='test':
-    x0,y0,z0=generate_train(rwater,rland,30000)    
-print(x0,y0,z0)
+    x0,y0,z0=generate_test(rwater,rland,num,cub_dir=cub_dir,places_dir=places_dir,content_dir=content_dir)    
