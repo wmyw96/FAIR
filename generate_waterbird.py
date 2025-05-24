@@ -160,12 +160,6 @@ def generate(r_water,r_land,n_sample_train,n_sample_test,splitrate=0.7,model_nam
         img_black = Image.fromarray(np.around(img_np * seg_np).astype(np.uint8))
         combined_img = combine_and_mask(place, seg_np, img_black)
         combined_img = transform(combined_img.resize((280,280)))
-        plt.imshow(combined_img)
-        plt.axis('off') 
-        plt.show()
-        #y[i]=iswater[0]  #0: land 1: water
-        #z[i]=background[0] #0: land 1:water
-        #images[i]=combined_img
         images[i%save_freq]=combined_img
         y[i]=iswater[0]
         z[i]=background[0]
@@ -222,7 +216,6 @@ def generate(r_water,r_land,n_sample_train,n_sample_test,splitrate=0.7,model_nam
     np.save(f'./res/test/rwater_{r_water}_rland_{r_land}_y.npy',y)
     np.save(f'./res/test/rwater_{r_water}_rland_{r_land}_z.npy',z)
 
-    #x=resnet(images)
     return x,y,z
 
 
@@ -311,7 +304,7 @@ def generate_train(r_water,r_land,n_sample_train,model_name='resnet50',cub_dir =
     np.save(f'./res/train/rwater_{r_water}_rland_{r_land}_z.npy',z)
     return x,y,z
 
-def generate_test(r_water,r_land,n_sample_train,model_name='resnet50',cub_dir = './CUB',places_dir = './data_large',content_dir=''):
+def generate_test(r_water,r_land,n_sample_test,model_name='resnet50',cub_dir = './CUB',places_dir = './data_large',content_dir=''):
     #model_name: resnet50, resnet34, wideresnet50
     
     
@@ -350,11 +343,11 @@ def generate_test(r_water,r_land,n_sample_train,model_name='resnet50',cub_dir = 
         resnet=models.wide_resnet50_2(pretrained=True)
     save_freq=50
     images=torch.zeros(save_freq,3,280,280)
-    x=np.zeros((n_sample_train,2048))
-    y=np.zeros(n_sample_train)
-    z=np.zeros(n_sample_train)
+    x=np.zeros((n_sample_test,2048))
+    y=np.zeros(n_sample_test)
+    z=np.zeros(n_sample_test)
     transform=transforms.Compose([transforms.ToTensor()])
-    for i in range(n_sample_train):
+    for i in range(n_sample_test):
         # Load bird image and segmentation
         iswater = np.random.binomial(1,0.5,1)
         if iswater[0]==1:
@@ -399,13 +392,14 @@ def generate_test(r_water,r_land,n_sample_train,model_name='resnet50',cub_dir = 
 mode='train'
 rwater=0.5
 rland=0.5
-num=30000
+train_sample=50000
+test_sample=30000
 cub_dir = './CUB'
 places_dir = './data_large'
 content_dir=''
 if mode=='generate':
-    x0,y0,z0=generate(rwater,rland,num,cub_dir=cub_dir,places_dir=places_dir,content_dir=content_dir)
+    x0,y0,z0=generate(rwater,rland,train_sample,test_sample,cub_dir=cub_dir,places_dir=places_dir,content_dir=content_dir)
 elif mode=='train':
-    x0,y0,z0=generate_train(rwater,rland,num,cub_dir=cub_dir,places_dir=places_dir,content_dir=content_dir)
+    x0,y0,z0=generate_train(rwater,rland,train_sample,cub_dir=cub_dir,places_dir=places_dir,content_dir=content_dir)
 elif mode=='test':
-    x0,y0,z0=generate_test(rwater,rland,num,cub_dir=cub_dir,places_dir=places_dir,content_dir=content_dir)    
+    x0,y0,z0=generate_test(rwater,rland,test_sample,cub_dir=cub_dir,places_dir=places_dir,content_dir=content_dir)    
