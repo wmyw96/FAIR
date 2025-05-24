@@ -41,6 +41,8 @@ def run_dro():
     parser.add_argument('--btl', default=False, action='store_true')
     parser.add_argument('--hinge', default=False, action='store_true')
     parser.add_argument( '--method', choices=['LASSO','FAIR','GroupDRO','IRM'])
+    parser.add_argument( '--nstart', type=int, default=10)
+    parser.add_argument( '--sample', type=int, default=30000)
 
     # Model
     #print(parser)
@@ -202,5 +204,3 @@ def check_args(args):
         assert args.minority_fraction
         assert args.imbalance_ratio
 
-
-#run_dro()
