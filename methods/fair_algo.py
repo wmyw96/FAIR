@@ -295,8 +295,7 @@ class FairGumbelAlgo(object):
 					loss_rec.append(valid_loss + test_loss)
 				else:
 					valid_loss, test_loss = [0.0], [0.0]
-
-				loss_rec.append(valid_loss + test_loss)
+					loss_rec.append(valid_loss + test_loss)
 				if log:
 					print(f'iteration ({it}/{niters}), valid_loss = {valid_loss}, test_loss = {test_loss}\n' + 
 							f'gate logits = {print_prob(sigmoid(logits))}\n' + 
@@ -306,8 +305,3 @@ class FairGumbelAlgo(object):
 				'loss_rec': np.array(loss_rec),
 				'model': self.model}
 		return ret
-
-
-
-
-
