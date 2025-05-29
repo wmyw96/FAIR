@@ -15,7 +15,6 @@ import csv
 from methods.fair_algo import *
 import logging 
 
-print(torch.cuda.device_count())
 class FairLinearClassification(FairModel):
 	def __init__(self, num_envs, dim_x):
 		super(FairLinearClassification, self).__init__(num_envs, dim_x)
@@ -128,26 +127,26 @@ def main():
             acc(y0,y_test)
     elif(mode=='FAIR'):
         hyper_params= {
-            'gumbel_lr': 1e-3, 'model_lr': 1e-2, 'batch_size': 4000, 'niters': 20000,
+            'gumbel_lr': 1e-3, 'model_lr': 1e-2, 'batch_size': 4000, 'niters': 10000,
             'weight_decay_g': 0, 'weight_decay_f': 0,
             'diters': 3, 'giters': 1, 
             'init_temp': 5, 'final_temp': 0.1, 'offset': -1, 'anneal_iter': 100, 'anneal_rate': 0.993,
             }
         eval_freq=1000
-        res=np.zeros((nstart,hyper_params['niters']//eval_freq))
+        res=[]
         for i in range(nstart):
             print("restart:",i)
             random_row=np.random.choice(x[0].shape[0],size=sample,replace=False)
-            valid=[ torch.from_numpy(x_test).to(torch.float32).cuda()],[torch.from_numpy(y_test).view(-1,1).cuda()]	
-            test=[ torch.from_numpy(x_test).to(torch.float32).cuda()],[torch.from_numpy(y_test).view(-1,1).cuda()]
+            test=(x_test,y_test)
             model = FairLinearClassification(2, 500)
             algo = FairGumbelAlgo(num_envs=2, dim_x=500, model=model, gamma=100, loss=bce_loss, hyper_params=hyper_params)
             packs = algo.run_gumbel(([x[0][random_row],x[1][random_row]],
             [y[0][random_row],y[1][random_row]]), 
-            eval_metric=misclass, me_valid_data=valid, me_test_data=test, eval_iter=eval_freq, log=True)
-            res[i]=packs['loss_rec']
-        with open('waterbird_testfreq.csv','w',newline='') as f:
+            eval_metric=misclass, me_valid_data=test, me_test_data=test, eval_iter=eval_freq, log=True)
+            res.append(np.mean(packs['loss_rec'],axis=1))
+        with open('waterbird_test.csv','w',newline='') as f:
             writer=csv.writer(f)
+            print(res)
             writer.writerows(res)
     elif(mode=='GroupDRO'):
         for i in range(nstart):
