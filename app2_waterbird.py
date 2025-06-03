@@ -127,10 +127,10 @@ def main():
             acc(y0,y_test)
     elif(mode=='FAIR'):
         hyper_params= {
-            'gumbel_lr': 1e-3, 'model_lr': 1e-2, 'batch_size': 4000, 'niters': 10000,
-            'weight_decay_g': 0, 'weight_decay_f': 0,
-            'diters': 3, 'giters': 1, 
-            'init_temp': 5, 'final_temp': 0.1, 'offset': -1, 'anneal_iter': 100, 'anneal_rate': 0.993,
+            'gumbel_lr': 1e-2, 'model_lr': 1e-2, 'batch_size': 4000, 'niters': 10000,
+            'weight_decay_g': 1e-3, 'weight_decay_f': 1e-3,
+            'diters': 5, 'giters': 1, 
+            'init_temp': 0.5, 'final_temp': 0.05, 'offset': -3, 'anneal_iter': 100, 'anneal_rate': 0.993,
             }
         eval_freq=1000
         res=[]
@@ -139,7 +139,7 @@ def main():
             random_row=np.random.choice(x[0].shape[0],size=sample,replace=False)
             test=(x_test,y_test)
             model = FairLinearClassification(2, 500)
-            algo = FairGumbelAlgo(num_envs=2, dim_x=500, model=model, gamma=100, loss=bce_loss, hyper_params=hyper_params)
+            algo = FairGumbelAlgo(num_envs=2, dim_x=500, model=model, gamma=200, loss=bce_loss, hyper_params=hyper_params)
             packs = algo.run_gumbel(([x[0][random_row],x[1][random_row]],
             [y[0][random_row],y[1][random_row]]), 
             eval_metric=misclass, me_valid_data=test, me_test_data=test, eval_iter=eval_freq, log=True)
