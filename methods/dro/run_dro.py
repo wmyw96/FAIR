@@ -11,7 +11,7 @@ from methods.dro.utils import set_seed, Logger, CSVBatchLogger, log_args
 from methods.dro.train import train
 
 
-def run_dro():
+def run_dro(nstart=10):
     parser = argparse.ArgumentParser()
 
     # Settings
@@ -63,7 +63,7 @@ def run_dro():
     # Misc
     parser.add_argument('--seed', type=int, default=0)
     parser.add_argument('--show_progress', default=False, action='store_true')
-    parser.add_argument('--log_dir', default='./logs')
+    parser.add_argument('--log_dir', default='./saved_results/dro')
     parser.add_argument('--log_every', default=50, type=int)
     parser.add_argument('--save_step', type=int, default=10)
     parser.add_argument('--save_best', action='store_true', default=False)
@@ -189,8 +189,8 @@ def run_dro():
     train_csv_logger = CSVBatchLogger(os.path.join(args.log_dir, 'train.csv'), train_data.n_groups, mode=mode)
     val_csv_logger =  CSVBatchLogger(os.path.join(args.log_dir, 'val.csv'), train_data.n_groups, mode=mode)
     test_csv_logger =  CSVBatchLogger(os.path.join(args.log_dir, 'test.csv'), train_data.n_groups, mode=mode)
-
-    train(model, criterion, data, logger, train_csv_logger, val_csv_logger, test_csv_logger, args, epoch_offset=epoch_offset)
+    for i in range(nstart):
+        train(model, criterion, data, logger, train_csv_logger, val_csv_logger, test_csv_logger, args, epoch_offset=epoch_offset)
 
     train_csv_logger.close()
     val_csv_logger.close()
@@ -204,3 +204,5 @@ def check_args(args):
         assert args.minority_fraction
         assert args.imbalance_ratio
 
+
+#run_dro()

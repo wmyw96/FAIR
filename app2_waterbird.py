@@ -11,7 +11,7 @@ from methods.dro.run_dro import run_dro
 from methods.irm import run_irm
 import sys
 import csv
-
+import os
 from methods.fair_algo import *
 import logging 
 
@@ -103,7 +103,13 @@ def main():
     x_cat = np.concatenate((x[0],x[1]))
     y_cat = np.concatenate((y[0],y[1]))
 	
-
+    save_path='./saved_results'
+    try:
+        os.mkdir(save_path)
+    except FileExistsError:
+            pass
+    except Exception as e:
+          print(f"Error creating directory {save_path}: {e}")
 
     if(mode=='LASSO'):
     #baseline LASSO regression
@@ -127,10 +133,10 @@ def main():
             acc(y0,y_test)
     elif(mode=='FAIR'):
         hyper_params= {
-            'gumbel_lr': 1e-3, 'model_lr': 1e-2, 'batch_size': 4000, 'niters': 10000,
-            'weight_decay_g': 0, 'weight_decay_f': 0,
-            'diters': 3, 'giters': 1, 
-            'init_temp': 5, 'final_temp': 0.1, 'offset': -1, 'anneal_iter': 100, 'anneal_rate': 0.993,
+            'gumbel_lr': 1e-2, 'model_lr': 1e-2, 'batch_size': 4000, 'niters': 10000,
+            'weight_decay_g': 1e-3, 'weight_decay_f': 1e-3,
+            'diters': 5, 'giters': 1, 
+            'init_temp': 0.5, 'final_temp': 0.05, 'offset': -3, 'anneal_iter': 100, 'anneal_rate': 0.993,
             }
         eval_freq=1000
         res=[]
@@ -139,25 +145,28 @@ def main():
             random_row=np.random.choice(x[0].shape[0],size=sample,replace=False)
             test=(x_test,y_test)
             model = FairLinearClassification(2, 500)
-            algo = FairGumbelAlgo(num_envs=2, dim_x=500, model=model, gamma=100, loss=bce_loss, hyper_params=hyper_params)
+            algo = FairGumbelAlgo(num_envs=2, dim_x=500, model=model, gamma=200, loss=bce_loss, hyper_params=hyper_params)
             packs = algo.run_gumbel(([x[0][random_row],x[1][random_row]],
             [y[0][random_row],y[1][random_row]]), 
             eval_metric=misclass, me_valid_data=test, me_test_data=test, eval_iter=eval_freq, log=True)
             res.append(np.mean(packs['loss_rec'],axis=1))
-        with open('waterbird_test.csv','w',newline='') as f:
+        with open(save_path+'/waterbird_fair.csv','w',newline='') as f:
             writer=csv.writer(f)
-            print(res)
             writer.writerows(res)
     elif(mode=='GroupDRO'):
-        for i in range(nstart):
-            run_dro()
+            run_dro(nstart)
     elif(mode=='IRM'):
+        res=[]
         for i in range(nstart):
                 print("restart:",i)
                 random_row=np.random.choice(x[0].shape[0],size=sample,replace=False)
-                run_irm(envs=[{'images': torch.from_numpy(x[0][random_row]).to(torch.float32).cuda(),'labels': torch.from_numpy(y[0][random_row]).view(-1,1).cuda()},
+                loss_rec=run_irm(envs=[{'images': torch.from_numpy(x[0][random_row]).to(torch.float32).cuda(),'labels': torch.from_numpy(y[0][random_row]).view(-1,1).cuda()},
                 {'images': torch.from_numpy(x[1][random_row]).to(torch.float32).cuda(),'labels': torch.from_numpy(y[1][random_row]).view(-1,1).cuda()},
-                {'images': torch.from_numpy(x_test).to(torch.float32).cuda(),'labels': torch.from_numpy(y_test).view(-1,1).cuda()}])
+                {'images': torch.from_numpy(x_test).to(torch.float32).cuda(),'labels': torch.from_numpy(y_test).view(-1,1).cuda()}],steps=10001,save_freq=1000)
+                res.append(loss_rec)
+        with open(save_path+'/waterbird_irm.csv','w',newline='') as f:
+            writer=csv.writer(f)
+            writer.writerows(res)
     
 if __name__ == "__main__":
     main()
