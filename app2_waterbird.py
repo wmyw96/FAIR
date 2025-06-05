@@ -138,7 +138,7 @@ def main():
             'diters': 5, 'giters': 1, 
             'init_temp': 0.5, 'final_temp': 0.05, 'offset': -3, 'anneal_iter': 100, 'anneal_rate': 0.993,
             }
-        eval_freq=100
+        eval_freq=1000
         res=[]
         for i in range(nstart):
             print("restart:",i)
