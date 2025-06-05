@@ -10,7 +10,7 @@ from sympy import GramSchmidt,Matrix
 
 
 
-def run_irm(envs,hidden_dim=1,l2_regularizer_weight=0.001,lr=0.001,penalty_anneal_iters=100,penalty_weight=100.0,steps=20001):
+def run_irm(envs,hidden_dim=1,l2_regularizer_weight=0.001,lr=0.001,penalty_anneal_iters=100,penalty_weight=100.0,steps=20001,save_freq=100):
     
 
     final_train_accs = []
@@ -83,6 +83,7 @@ def run_irm(envs,hidden_dim=1,l2_regularizer_weight=0.001,lr=0.001,penalty_annea
     optimizer = optim.Adam(mlp.parameters(), lr=lr)
 
     pretty_print('step', 'train nll', 'train acc', 'train penalty', 'test acc')
+    loss_rec=[]
 
     for step in range(steps):
         for env in envs:
@@ -113,7 +114,9 @@ def run_irm(envs,hidden_dim=1,l2_regularizer_weight=0.001,lr=0.001,penalty_annea
         optimizer.step()
         
         test_acc = envs[2]['acc']
-        if step % 100 == 0:
+        
+        if step % save_freq == 0:
+            loss_rec.append(test_acc.detach().cpu().numpy())
             pretty_print(
             np.int32(step),
             train_nll.detach().cpu().numpy(),
@@ -128,3 +131,4 @@ def run_irm(envs,hidden_dim=1,l2_regularizer_weight=0.001,lr=0.001,penalty_annea
     print(np.mean(final_train_accs), np.std(final_train_accs))
     print('Final test acc (mean/std across restarts so far):')
     print(np.mean(final_test_accs), np.std(final_test_accs))
+    return loss_rec
