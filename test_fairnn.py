@@ -1,6 +1,6 @@
 from data.model import *
 from methods.brute_force import brute_force
-from methods.fair_gumbel_one import fairnn_sgd_gumbel_uni, fairnn_sgd_gumbel_refit
+from methods.fair_gumbel import fairnn_sgd_gumbel_uni, fairnn_sgd_gumbel_refit
 from methods.tools import pooled_least_squares
 from utils import *
 import numpy as np

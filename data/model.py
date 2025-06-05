@@ -431,7 +431,7 @@ def generate_nonlinear_SCM(num_envs, nparent, nchild, nother=0):
 
 
 def random_assignment_matrix(num_vars, ratio, function_id_max, coefficient_max, degree_max, reference_g=None):
-	function_matrix = np.zeros((num_vars, num_vars), dtype=np.int)
+	function_matrix = np.zeros((num_vars, num_vars), dtype=np.int32)
 	coefficient_matrix = np.zeros((num_vars, num_vars), dtype=np.float)
 	if reference_g is None:
 		for i in range(num_vars):
@@ -554,7 +554,7 @@ def generate_random_SCM(num_vars, y_index=None, min_child=0, min_parent=0, num_e
 def SCM_ex1():
 	num_vars = 3
 	y_index = 1
-	func_mat = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0]], dtype=np.int)
+	func_mat = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0]], dtype=np.int32)
 	coeff1 = np.array([[1, 0, 0], [2, 1, 0], [1, -0.3, 1]], dtype=np.float)
 	coeff2 = np.array([[1.5, 0, 0], [2, 1, 0], [0.3, 0.7, 0.3]], dtype=np.float)
 	models = [
