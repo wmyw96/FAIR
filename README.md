@@ -101,16 +101,18 @@ Then, you can run
 python app2_waterbird.py --method FAIR --nstart 10 --sample 10000
 ```
 
-to conduct repeated training trials of our FAIR linear logistic regression model, each time using the randomly sampled data from the waterbird dataset saved in `./res`. We also support other methods, including LASSO, IRM, and GroupDRO. You can apply the methods above by changing the instructions. The test loss during the iteration of training will be saved in `./saved_results/waterbird_{method}.csv`. The mean and std accuracy reported in the paper is calculated by the final test accuracy of each trial. The training curve can be reproduced by plotting the mean of data in `\saved_results`.
+to conduct repeated training trials of our FAIR linear logistic regression model, each time using the randomly sampled data from the waterbird dataset saved in `./res`. We also support other methods, including LASSO, IRM, and GroupDRO, which are all trained on the feature extracted by ResNet50 with the linear model. The code of GroupDRO is cloned from [here](https://github.com/kohpangwei/group_DRO). You can apply the methods above by changing the instructions. 
+
+The test accuracy during the iteration of training will be saved in `./saved_results/waterbird_{method}.csv`. Each column in the result of FAIR and IRM represents the test accuracy curve of each repeated experiment, and each row represents the test accuracy at the corresponding iteration. While each row in result of LASSO represents test accuracy of models trained on oracle environment env* , env1, env2 and env1+env2, respectively. The mean and std accuracy reported in the paper is calculated by the test accuracy of the final iteration in each trial. The training curve can be reproduced by plotting the mean of data in `\saved_results`.
 
 ```python
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-df_fair = pd.read_csv("./saved_results/waterbird_irm.csv",encoding="utf-8", header=None)
-iters=np.linspace(0,1,num=df_fair.shape[1])
+df_fair = pd.read_csv("./saved_results/waterbird_fair.csv",encoding="utf-8")
+iters=np.linspace(0,1,num=df_fair.shape[0])
 figs, axs = plt.subplots(1, 1, figsize=(8, 4))
-axs.plot(iters, df_fair.mean(axis=0),color='#05348b',label='FAIR-GB')
+axs.plot(iters, df_fair.mean(axis=1),color='#05348b',label='FAIR-GB')
 axs.set_xlabel('Ratio of Iteration')
 axs.set_ylabel('Test Accuracy')
 plt.savefig('saved_results/waterbird_test_curve.pdf')
