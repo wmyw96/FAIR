@@ -15,7 +15,7 @@ from methods.dro.loss import LossComputer
 #from pytorch_transformers import AdamW, WarmupLinearSchedule
 
 def run_epoch(epoch, model, optimizer, loader, loss_computer, logger, csv_logger, args,
-              is_training, show_progress=False, log_every=50, scheduler=None):
+              is_training, show_progress=False, log_every=50, scheduler=None,device=torch.device('cpu')):
     """
     scheduler is only used inside this function if model is bert.
     """
@@ -35,7 +35,7 @@ def run_epoch(epoch, model, optimizer, loader, loss_computer, logger, csv_logger
     with torch.set_grad_enabled(is_training):
         for batch_idx, batch in enumerate(prog_bar_loader):
 
-            batch = tuple(t.cuda() for t in batch)
+            batch = tuple(t.to(device) for t in batch)
             x = batch[0]
             y = batch[1]
             g = batch[2]
@@ -83,7 +83,9 @@ def run_epoch(epoch, model, optimizer, loader, loss_computer, logger, csv_logger
 def train(model, criterion, dataset,
           logger, train_csv_logger, val_csv_logger, test_csv_logger,
           args, epoch_offset):
-    model = model.cuda()
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    model = model.to(device)
 
     # process generalization adjustment stuff
     adjustments = [float(c) for c in args.generalization_adjustment.split(',')]
@@ -103,7 +105,8 @@ def train(model, criterion, dataset,
         step_size=args.robust_step_size,
         normalize_loss=args.use_normalized_loss,
         btl=args.btl,
-        min_var_weight=args.minimum_variational_weight)
+        min_var_weight=args.minimum_variational_weight,
+        device=device)
 
     # BERT uses its own scheduler and optimizer
     if args.model == 'bert':
@@ -152,7 +155,7 @@ def train(model, criterion, dataset,
             is_training=True,
             show_progress=args.show_progress,
             log_every=args.log_every,
-            scheduler=scheduler)
+            scheduler=scheduler,device=device)
 
         logger.write(f'\nValidation:\n')
         val_loss_computer = LossComputer(
@@ -160,13 +163,13 @@ def train(model, criterion, dataset,
             is_robust=args.robust,
             dataset=dataset['val_data'],
             step_size=args.robust_step_size,
-            alpha=args.alpha)
+            alpha=args.alpha,device=device)
         run_epoch(
             epoch, model, optimizer,
             dataset['val_loader'],
             val_loss_computer,
             logger, val_csv_logger, args,
-            is_training=False)
+            is_training=False,device=device)
 
         # Test set; don't print to avoid peeking
         if dataset['test_data'] is not None:
@@ -175,13 +178,13 @@ def train(model, criterion, dataset,
                 is_robust=args.robust,
                 dataset=dataset['test_data'],
                 step_size=args.robust_step_size,
-                alpha=args.alpha)
+                alpha=args.alpha,device=device)
             run_epoch(
                 epoch, model, optimizer,
                 dataset['test_loader'],
                 test_loss_computer,
                 None, test_csv_logger, args,
-                is_training=False)
+                is_training=False,device=device)
 
         # Inspect learning rates
         if (epoch+1) % 1 == 0:
