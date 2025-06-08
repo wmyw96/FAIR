@@ -5,7 +5,7 @@ import torch.nn.functional as F
 import numpy as np
 
 class LossComputer:
-    def __init__(self, criterion, is_robust, dataset, alpha=None, gamma=0.1, adj=None, min_var_weight=0, step_size=0.01, normalize_loss=False, btl=False):
+    def __init__(self, criterion, is_robust, dataset, alpha=None, gamma=0.1, adj=None, min_var_weight=0, step_size=0.01, normalize_loss=False, btl=False,device=torch.device('cpu')):
         self.criterion = criterion
         self.is_robust = is_robust
         self.gamma = gamma
@@ -14,24 +14,25 @@ class LossComputer:
         self.step_size = step_size
         self.normalize_loss = normalize_loss
         self.btl = btl
+        self.device=device
 
         self.n_groups = dataset.n_groups
-        self.group_counts = dataset.group_counts().cuda()
+        self.group_counts = dataset.group_counts().to(self.device)
         self.group_frac = self.group_counts/self.group_counts.sum()
         self.group_str = dataset.group_str
 
         if adj is not None:
-            self.adj = torch.from_numpy(adj).float().cuda()
+            self.adj = torch.from_numpy(adj).float().to(self.device)
         else:
-            self.adj = torch.zeros(self.n_groups).float().cuda()
+            self.adj = torch.zeros(self.n_groups).float().to(self.device)
 
         if is_robust:
             assert alpha, 'alpha must be specified'
 
         # quantities maintained throughout training
-        self.adv_probs = torch.ones(self.n_groups).cuda()/self.n_groups
-        self.exp_avg_loss = torch.zeros(self.n_groups).cuda()
-        self.exp_avg_initialized = torch.zeros(self.n_groups).byte().cuda()
+        self.adv_probs = torch.ones(self.n_groups).to(self.device)/self.n_groups
+        self.exp_avg_loss = torch.zeros(self.n_groups).to(self.device)
+        self.exp_avg_initialized = torch.zeros(self.n_groups).byte().to(self.device)
 
         self.reset_stats()
 
@@ -97,7 +98,7 @@ class LossComputer:
 
     def compute_group_avg(self, losses, group_idx):
         # compute observed counts and mean loss for each group
-        group_map = (group_idx == torch.arange(self.n_groups).unsqueeze(1).long().cuda()).float()
+        group_map = (group_idx == torch.arange(self.n_groups).unsqueeze(1).long().to(self.device)).float()
         group_count = group_map.sum(1)
         group_denom = group_count + (group_count==0).float() # avoid nans
         group_loss = (group_map @ losses.view(-1))/group_denom
@@ -110,11 +111,11 @@ class LossComputer:
         self.exp_avg_initialized = (self.exp_avg_initialized>0) + (group_count>0)
 
     def reset_stats(self):
-        self.processed_data_counts = torch.zeros(self.n_groups).cuda()
-        self.update_data_counts = torch.zeros(self.n_groups).cuda()
-        self.update_batch_counts = torch.zeros(self.n_groups).cuda()
-        self.avg_group_loss = torch.zeros(self.n_groups).cuda()
-        self.avg_group_acc = torch.zeros(self.n_groups).cuda()
+        self.processed_data_counts = torch.zeros(self.n_groups).to(self.device)
+        self.update_data_counts = torch.zeros(self.n_groups).to(self.device)
+        self.update_batch_counts = torch.zeros(self.n_groups).to(self.device)
+        self.avg_group_loss = torch.zeros(self.n_groups).to(self.device)
+        self.avg_group_acc = torch.zeros(self.n_groups).to(self.device)
         self.avg_per_sample_loss = 0.
         self.avg_actual_loss = 0.
         self.avg_acc = 0.
