@@ -59,6 +59,7 @@ def acc(traindata,testdata):
           if(abs(traindata[i]-testdata[i])<0.5):
              num=num+1
     print(num/n)
+    return num/n
 
 def bce_loss(out_prob, cat_y):
 	return -0.5 * torch.mean((cat_y * torch.log(out_prob + 1e-9) + (1 - cat_y) * torch.log(1 - out_prob + 1e-9)))
@@ -113,9 +114,13 @@ def main():
 
     if(mode=='LASSO'):
     #baseline LASSO regression
+        res=pd.DataFrame()
         for i in range(nstart):
+            res_i=[]
             l75=Lasso(alpha=0.001,max_iter=1000)
             l75.fit(x[1],y[1])
+            l95=Lasso(alpha=0.001,max_iter=1000)
+            l95.fit(x[0],y[0])
 
             l_star=Lasso(alpha=0.001,max_iter=1000)
             l_env=Lasso(alpha=0.001)
@@ -124,13 +129,18 @@ def main():
 
             y0=l_star.predict(x_test)
             print("accuracy of env*:")
-            acc(y0,y_test)
+            res_i.append(acc(y0,y_test))
+            y0=l95.predict(x_test)
+            print("accuracy of env1:")
+            res_i.append(acc(y0,y_test))
             y0=l75.predict(x_test)
             print("accuracy of env2:")
-            acc(y0,y_test)
+            res_i.append(acc(y0,y_test))
             y0=l_env.predict(x_test)
             print("accuracy of env1+env2:")
-            acc(y0,y_test)
+            res_i.append(acc(y0,y_test))
+            res[f'restart: {i}']=res_i
+        res.to_csv(save_path+'/waterbird_lasso.csv', sep=',', index=False, header=True)
     elif(mode=='FAIR'):
         hyper_params= {
             'gumbel_lr': 1e-2, 'model_lr': 1e-2, 'batch_size': 4000, 'niters': 10000,
@@ -139,7 +149,7 @@ def main():
             'init_temp': 0.5, 'final_temp': 0.05, 'offset': -3, 'anneal_iter': 100, 'anneal_rate': 0.993,
             }
         eval_freq=1000
-        res=[]
+        res=pd.DataFrame()
         for i in range(nstart):
             print("restart:",i)
             random_row=np.random.choice(x[0].shape[0],size=sample,replace=False)
@@ -149,24 +159,20 @@ def main():
             packs = algo.run_gumbel(([x[0][random_row],x[1][random_row]],
             [y[0][random_row],y[1][random_row]]), 
             eval_metric=misclass, me_valid_data=test, me_test_data=test, eval_iter=eval_freq, log=True)
-            res.append(np.mean(packs['loss_rec'],axis=1))
-        with open(save_path+'/waterbird_fair.csv','w',newline='') as f:
-            writer=csv.writer(f)
-            writer.writerows(res)
+            res[f'restart: {i}']=1-np.mean(packs['loss_rec'],axis=1)
+        res.to_csv(save_path+'/waterbird_fair.csv', sep=',', index=False, header=True)
     elif(mode=='GroupDRO'):
             run_dro(nstart)
     elif(mode=='IRM'):
-        res=[]
+        res=pd.DataFrame()
         for i in range(nstart):
                 print("restart:",i)
                 random_row=np.random.choice(x[0].shape[0],size=sample,replace=False)
-                loss_rec=run_irm(envs=[{'images': torch.from_numpy(x[0][random_row]).to(torch.float32).cuda(),'labels': torch.from_numpy(y[0][random_row]).view(-1,1).cuda()},
-                {'images': torch.from_numpy(x[1][random_row]).to(torch.float32).cuda(),'labels': torch.from_numpy(y[1][random_row]).view(-1,1).cuda()},
-                {'images': torch.from_numpy(x_test).to(torch.float32).cuda(),'labels': torch.from_numpy(y_test).view(-1,1).cuda()}],steps=10001,save_freq=1000)
-                res.append(loss_rec)
-        with open(save_path+'/waterbird_irm.csv','w',newline='') as f:
-            writer=csv.writer(f)
-            writer.writerows(res)
+                loss_rec=run_irm(envs=[{'images': torch.from_numpy(x[0][random_row]).to(torch.float32),'labels': torch.from_numpy(y[0][random_row]).view(-1,1)},
+                {'images': torch.from_numpy(x[1][random_row]).to(torch.float32),'labels': torch.from_numpy(y[1][random_row]).view(-1,1)},
+                {'images': torch.from_numpy(x_test).to(torch.float32),'labels': torch.from_numpy(y_test).view(-1,1)}],steps=10001,save_freq=1000)
+                res[f'restart: {i}']=loss_rec
+        res.to_csv(save_path+'/waterbird_irm.csv', sep=',', index=False, header=True)
     
 if __name__ == "__main__":
     main()
