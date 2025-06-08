@@ -19,6 +19,8 @@ def run_irm(envs,hidden_dim=1,l2_regularizer_weight=0.001,lr=0.001,penalty_annea
 
     # Load MNIST, make train/val splits, and shuffle train set examples
     # Build environments
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    envs=[{'images':e['images'].to(device), 'labels': e['labels'].to(device)} for e in envs]
 
     def make_environment(r1,r2,mode,begin,end):
         im = np.load(f'./res/{mode}/rwater_{r1}_rland_{r2}_x.npy')[begin:end]
@@ -52,7 +54,7 @@ def run_irm(envs,hidden_dim=1,l2_regularizer_weight=0.001,lr=0.001,penalty_annea
             out = self._main(input)
             return out
 
-    mlp = MLP().cuda()
+    mlp = MLP().to(device)
 
     # Define loss function helpers
 
@@ -64,7 +66,7 @@ def run_irm(envs,hidden_dim=1,l2_regularizer_weight=0.001,lr=0.001,penalty_annea
         return ((preds - y).abs() < 1e-1).float().mean()
 
     def penalty(logits, y):
-        scale = torch.tensor(1.).cuda().requires_grad_()
+        scale = torch.tensor(1.).to(device).requires_grad_()
         loss = mean_nll(logits * scale, y)
         grad = autograd.grad(loss, [scale], create_graph=True)[0]
         return torch.sum(grad**2)
@@ -96,7 +98,7 @@ def run_irm(envs,hidden_dim=1,l2_regularizer_weight=0.001,lr=0.001,penalty_annea
         train_acc = torch.stack([envs[0]['acc'], envs[1]['acc']]).mean()
         train_penalty = torch.stack([envs[0]['penalty'], envs[1]['penalty']]).mean()
 
-        weight_norm = torch.tensor(0.).cuda()
+        weight_norm = torch.tensor(0.).to(device)
         for w in mlp.parameters():
             weight_norm += w.norm().pow(2)
 
