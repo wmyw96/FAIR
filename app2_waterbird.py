@@ -8,12 +8,14 @@ import pandas as pd
 from sklearn.decomposition import PCA
 from sklearn.linear_model import Lasso,LogisticRegression
 from methods.dro.run_dro import run_dro
+from methods.dro.utils import  Logger,CSVBatchLogger
 from methods.irm import run_irm
 import sys
 import csv
 import os
 from methods.fair_algo import *
 import logging 
+
 
 class FairLinearClassification(FairModel):
 	def __init__(self, num_envs, dim_x):
@@ -121,12 +123,10 @@ def main():
             l75.fit(x[1],y[1])
             l95=Lasso(alpha=0.001,max_iter=1000)
             l95.fit(x[0],y[0])
-
             l_star=Lasso(alpha=0.001,max_iter=1000)
             l_env=Lasso(alpha=0.001)
             l_star.fit(x[2],y[2])
             l_env.fit(x_cat,y_cat)
-
             y0=l_star.predict(x_test)
             print("accuracy of env*:")
             res_i.append(acc(y0,y_test))
@@ -161,8 +161,20 @@ def main():
             eval_metric=misclass, me_valid_data=test, me_test_data=test, eval_iter=eval_freq, log=True)
             res[f'restart: {i}']=1-np.mean(packs['loss_rec'],axis=1)
         res.to_csv(save_path+'/waterbird_fair.csv', sep=',', index=False, header=True)
+        # with open(save_path+'/waterbird_fair.csv','w',newline='') as f:
+        #     writer=csv.writer(f)
+        #     writer.writerows(res)
     elif(mode=='GroupDRO'):
-            run_dro(nstart)
+            res=pd.DataFrame()
+            train_csv_logger = CSVBatchLogger(os.path.join('./saved_results/dro', 'train.csv'), 4, mode='w')
+            val_csv_logger =  CSVBatchLogger(os.path.join('./saved_results/dro', 'val.csv'), 4, mode='w')
+            test_csv_logger =  CSVBatchLogger(os.path.join('./saved_results/dro', 'test.csv'), 4, mode='w')
+            logger = Logger(os.path.join('./saved_results/dro', 'log.txt'), 'w')
+            for i in range(nstart):
+                random_row=np.random.choice(x[0].shape[0],size=sample,replace=False)
+                acc_rec=run_dro((x[0][random_row],x[1][random_row],x_test),(y[0][random_row],y[1][random_row],y_test),logger,train_csv_logger, val_csv_logger, test_csv_logger)
+                res[f'restart: {i}']=acc_rec
+            res.to_csv(save_path+'/waterbird_GroupDRO.csv', sep=',', index=False, header=True)
     elif(mode=='IRM'):
         res=pd.DataFrame()
         for i in range(nstart):
