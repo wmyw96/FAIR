@@ -161,9 +161,6 @@ def main():
             eval_metric=misclass, me_valid_data=test, me_test_data=test, eval_iter=eval_freq, log=True)
             res[f'restart: {i}']=1-np.mean(packs['loss_rec'],axis=1)
         res.to_csv(save_path+'/waterbird_fair.csv', sep=',', index=False, header=True)
-        # with open(save_path+'/waterbird_fair.csv','w',newline='') as f:
-        #     writer=csv.writer(f)
-        #     writer.writerows(res)
     elif(mode=='GroupDRO'):
             res=pd.DataFrame()
             train_csv_logger = CSVBatchLogger(os.path.join('./saved_results/dro', 'train.csv'), 4, mode='w')
