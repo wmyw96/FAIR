@@ -1,24 +1,11 @@
 import os
-import torch
-import numpy as np
-from torch.utils.data import Subset
-from methods.dro.data.label_shift_utils import prepare_label_shift_data
 from methods.dro.data.confounder_utils import prepare_confounder_data
 
 root_dir = '/u/scr/nlp/dro/'
 
 dataset_attributes = {
-    'CelebA': {
-        'root_dir': 'celebA'
-    },
     'CUB': {
         'root_dir': 'cub'
-    },
-    'CIFAR10': {
-        'root_dir': 'CIFAR10/data'
-    },
-    'MultiNLI': {
-        'root_dir': 'multinli'
     }
 }
 
@@ -27,15 +14,12 @@ for dataset in dataset_attributes:
 
 shift_types = ['confounder', 'label_shift_step']
 
-def prepare_data(args, train, return_full_dataset=False):
+def prepare_data(args, features,responses,train, return_full_dataset=False):
     # Set root_dir to defaults if necessary
     if args.root_dir is None:
         args.root_dir = dataset_attributes[args.dataset]['root_dir']
     if args.shift_type=='confounder':
-        return prepare_confounder_data(args, train, return_full_dataset)
-    elif args.shift_type.startswith('label_shift'):
-        assert not return_full_dataset
-        return prepare_label_shift_data(args, train)
+        return prepare_confounder_data(args, features,responses,train, return_full_dataset)
 
 def log_data(data, logger):
     logger.write('Training Data...\n')

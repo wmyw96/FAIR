@@ -1,10 +1,6 @@
 import os
 import torch
-import pandas as pd
-from PIL import Image
 import numpy as np
-import torchvision.transforms as transforms
-from methods.dro.models import model_attributes
 from torch.utils.data import Dataset, Subset
 from methods.dro.data.confounder_dataset import ConfounderDataset
 
@@ -15,7 +11,7 @@ class CUBDataset(ConfounderDataset):
     """
 
     def __init__(self, root_dir,
-                 target_name, confounder_names,
+                 target_name, confounder_names,features,responses,
                  augment_data=False,
                  model_type=None):
         self.root_dir = root_dir
@@ -23,20 +19,19 @@ class CUBDataset(ConfounderDataset):
         self.confounder_names = confounder_names
         self.model_type = model_type
         self.augment_data = augment_data
+        self.env_idx=[responses[0].shape[0],responses[0].shape[0]+responses[1].shape[0],
+                      responses[0].shape[0]+responses[1].shape[0]+responses[2].shape[0]]
 
         
 
 
         # Get the y values
-        self.y_array =  np.concatenate((np.load(
-                './res/train/rwater_0.95_rland_0.9_y.npy'),np.load(
-                './res/train/rwater_0.75_rland_0.7_y.npy'),np.load(
-                './res/test/rwater_0.02_rland_0.02_y.npy')))
+        self.y_array =  np.concatenate(responses).flatten()
         self.n_classes = 2
 
         # We only support one confounder for CUB for now
-        self.confounder_array = np.zeros(130000)
-        self.confounder_array[50000:100000] = np.ones(50000)
+        self.confounder_array = np.zeros(self.y_array.shape[0])
+        self.confounder_array[self.env_idx[0]:self.env_idx[1]] = np.ones(responses[1].shape[0])
         self.n_confounders = 1
         # Map to groups
         self.n_groups = pow(2, 2)
@@ -49,48 +44,14 @@ class CUBDataset(ConfounderDataset):
             'test': 2
         }
 
-        # Set transform
-        if True:
-            self.features_mat = torch.from_numpy(np.concatenate((np.load(
-                './res/train/rwater_0.95_rland_0.9_x.npy'),np.load(
-                './res/train/rwater_0.75_rland_0.7_x.npy'),np.load(
-                './res/test/rwater_0.02_rland_0.02_x.npy')))).float()
-            self.train_transform = None
-            self.eval_transform = None
-        else:
-            self.features_mat = None
-            self.train_transform = get_transform_cub(
-                self.model_type,
-                train=True,
-                augment_data=augment_data)
-            self.eval_transform = get_transform_cub(
-                self.model_type,
-                train=False,
-                augment_data=augment_data)
+        
+        self.features_mat = torch.from_numpy(np.concatenate(features)).float()
+        self.train_transform = None
+        self.eval_transform = None
+    def get_splits(self, splits, train_frac=1.0):
+        subsets = {}
+        subsets['train'] = Subset(self,np.arange(0,self.env_idx[1]))
+        subsets['val'] = Subset(self,np.arange(self.env_idx[1],self.env_idx[2]))
+        subsets['test'] = Subset(self,np.arange(self.env_idx[1],self.env_idx[2]))
+        return subsets
 
-
-def get_transform_cub(model_type, train, augment_data):
-    scale = 256.0/224.0
-    target_resolution = model_attributes[model_type]['target_resolution']
-    assert target_resolution is not None
-
-    if (not train) or (not augment_data):
-        # Resizes the image to a slightly larger square then crops the center.
-        transform = transforms.Compose([
-            transforms.Resize((int(target_resolution[0]*scale), int(target_resolution[1]*scale))),
-            transforms.CenterCrop(target_resolution),
-            transforms.ToTensor(),
-            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-        ])
-    else:
-        transform = transforms.Compose([
-            transforms.RandomResizedCrop(
-                target_resolution,
-                scale=(0.7, 1.0),
-                ratio=(0.75, 1.3333333333333333),
-                interpolation=2),
-            transforms.RandomHorizontalFlip(),
-            transforms.ToTensor(),
-            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-        ])
-    return transform
