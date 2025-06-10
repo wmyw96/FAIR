@@ -138,14 +138,7 @@ def run_dro(features,responses,logger,train_csv_logger, val_csv_logger, test_csv
         logger.write(f'starting from epoch {epoch_offset}')
     else:
         epoch_offset=0
-    # train_csv_logger = CSVBatchLogger(os.path.join(args.log_dir, 'train.csv'), train_data.n_groups, mode=mode)
-    # val_csv_logger =  CSVBatchLogger(os.path.join(args.log_dir, 'val.csv'), train_data.n_groups, mode=mode)
-    # test_csv_logger =  CSVBatchLogger(os.path.join(args.log_dir, 'test.csv'), train_data.n_groups, mode=mode)
     acc_rec=train(model, criterion, data, logger, train_csv_logger, val_csv_logger, test_csv_logger, args, epoch_offset=epoch_offset)
-
-    # train_csv_logger.close()
-    # val_csv_logger.close()
-    # test_csv_logger.close()
     return acc_rec
 
 def check_args(args):
