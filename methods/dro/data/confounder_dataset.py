@@ -42,11 +42,7 @@ class ConfounderDataset(Dataset):
         return x,y,g
 
     def get_splits(self, splits, train_frac=1.0):
-        subsets = {}
-        subsets['train'] = Subset(self,np.arange(0,100000))
-        subsets['val'] = Subset(self,np.arange(100000,130000))
-        subsets['test'] = Subset(self,np.arange(100000,130000))
-        return subsets
+        raise NotImplementedError
 
     def group_str(self, group_idx):
         y = group_idx // (self.n_groups/self.n_classes)

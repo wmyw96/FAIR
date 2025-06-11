@@ -1,42 +1,26 @@
-import os
-import torch
-import pandas as pd
-from PIL import Image
-import numpy as np
-import torchvision.transforms as transforms
-from methods.dro.models import model_attributes
-from torch.utils.data import Dataset, Subset
-from methods.dro.data.celebA_dataset import CelebADataset
 from methods.dro.data.cub_dataset import CUBDataset
 from methods.dro.data.dro_dataset import DRODataset
-from methods.dro.data.multinli_dataset import MultiNLIDataset
 
 ################
 ### SETTINGS ###
 ################
 
 confounder_settings = {
-    'CelebA':{
-        'constructor': CelebADataset
-    },
     'CUB':{
         'constructor': CUBDataset
-    },
-    'MultiNLI':{
-        'constructor': MultiNLIDataset
     }
 } 
 
 ########################
 ### DATA PREPARATION ###
 ########################
-def prepare_confounder_data(args, train, return_full_dataset=False):
+def prepare_confounder_data(args,features,responses, train, return_full_dataset=False):
     full_dataset = confounder_settings[args.dataset]['constructor'](
         root_dir=args.root_dir,
         target_name=args.target_name,
         confounder_names=args.confounder_names,
         model_type=args.model,
-        augment_data=args.augment_data)
+        augment_data=args.augment_data,features=features,responses=responses)
     print(full_dataset)
     if return_full_dataset:
         return DRODataset(

@@ -3,7 +3,6 @@ import argparse
 import pandas as pd
 import torch
 import torch.nn as nn
-import torchvision
 
 from methods.dro.models import model_attributes
 from methods.dro.data.data import dataset_attributes, shift_types, prepare_data, log_data
@@ -11,7 +10,7 @@ from methods.dro.utils import set_seed, Logger, CSVBatchLogger, log_args
 from methods.dro.train import train
 
 
-def run_dro(nstart=10):
+def run_dro(features,responses,logger,train_csv_logger, val_csv_logger, test_csv_logger):
     parser = argparse.ArgumentParser()
 
     # Settings
@@ -55,7 +54,7 @@ def run_dro(nstart=10):
     # Optimization
     parser.add_argument('--n_epochs', type=int, default=100)
     parser.add_argument('--batch_size', type=int, default=4096)
-    parser.add_argument('--lr', type=float, default=0.001)
+    parser.add_argument('--lr', type=float, default=0.01)
     parser.add_argument('--scheduler', action='store_true', default=False)
     parser.add_argument('--weight_decay', type=float, default=1e-4)
     parser.add_argument('--gamma', type=float, default=0.1)
@@ -71,13 +70,6 @@ def run_dro(nstart=10):
 
     args = parser.parse_args()
     check_args(args)
-    print(args.batch_size,args.n_epochs)
-
-    # BERT-specific configs copied over from run_glue.py
-    if args.model == 'bert':
-        args.max_grad_norm = 1.0
-        args.adam_epsilon = 1e-8
-        args.warmup_steps = 0
 
     if os.path.exists(args.log_dir) and args.resume:
         resume=True
@@ -90,7 +82,6 @@ def run_dro(nstart=10):
     if not os.path.exists(args.log_dir):
         os.makedirs(args.log_dir)
 
-    logger = Logger(os.path.join(args.log_dir, 'log.txt'), mode)
     # Record args
     log_args(args, logger)
 
@@ -101,9 +92,10 @@ def run_dro(nstart=10):
     test_data = None
     test_loader = None
     if args.shift_type == 'confounder':
-        train_data, val_data, test_data = prepare_data(args, train=True)
+        train_data, val_data, test_data = prepare_data(args, features=features,responses=responses,train=True)
     elif args.shift_type == 'label_shift_step':
         train_data, val_data = prepare_data(args, train=True)
+    print('data loaded')
 
     loader_kwargs = {'batch_size':args.batch_size, 'num_workers':4, 'pin_memory':True}
     train_loader = train_data.get_loader(train=True, reweight_groups=args.reweight_groups, **loader_kwargs)
@@ -133,52 +125,12 @@ def run_dro(nstart=10):
         d = train_data.input_size()[0]
         model = nn.Linear(d, n_classes)
         model.has_aux_logits = False
-    elif args.model == 'resnet50':
-        model = torchvision.models.resnet50(pretrained=pretrained)
-        d = model.fc.in_features
-        model.fc = nn.Linear(d, n_classes)
-    elif args.model == 'resnet34':
-        model = torchvision.models.resnet34(pretrained=pretrained)
-        d = model.fc.in_features
-        model.fc = nn.Linear(d, n_classes)
-    elif args.model == 'wideresnet50':
-        model = torchvision.models.wide_resnet50_2(pretrained=pretrained)
-        d = model.fc.in_features
-        model.fc = nn.Linear(d, n_classes)
-    elif args.model == 'bert':
-        assert args.dataset == 'MultiNLI'
-
-        from pytorch_transformers import BertConfig, BertForSequenceClassification
-        config_class = BertConfig
-        model_class = BertForSequenceClassification
-
-        config = config_class.from_pretrained(
-            'bert-base-uncased',
-            num_labels=3,
-            finetuning_task='mnli')
-        model = model_class.from_pretrained(
-            'bert-base-uncased',
-            from_tf=False,
-            config=config)
     else:
         raise ValueError('Model not recognized.')
 
     logger.flush()
 
-    ## Define the objective
-    if args.hinge:
-        assert args.dataset in ['CelebA', 'CUB'] # Only supports binary
-        def hinge_loss(yhat, y):
-            # The torch loss takes in three arguments so we need to split yhat
-            # It also expects classes in {+1.0, -1.0} whereas by default we give them in {0, 1}
-            # Furthermore, if y = 1 it expects the first input to be higher instead of the second,
-            # so we need to swap yhat[:, 0] and yhat[:, 1]...
-            torch_loss = torch.nn.MarginRankingLoss(margin=1.0, reduction='none')
-            y = (y.float() * 2.0) - 1.0
-            return torch_loss(yhat[:, 1], yhat[:, 0], y)
-        criterion = hinge_loss
-    else:
-        criterion = torch.nn.CrossEntropyLoss(reduction='none')
+    criterion = torch.nn.CrossEntropyLoss(reduction='none')
 
     if resume:
         df = pd.read_csv(os.path.join(args.log_dir, 'test.csv'))
@@ -186,15 +138,8 @@ def run_dro(nstart=10):
         logger.write(f'starting from epoch {epoch_offset}')
     else:
         epoch_offset=0
-    train_csv_logger = CSVBatchLogger(os.path.join(args.log_dir, 'train.csv'), train_data.n_groups, mode=mode)
-    val_csv_logger =  CSVBatchLogger(os.path.join(args.log_dir, 'val.csv'), train_data.n_groups, mode=mode)
-    test_csv_logger =  CSVBatchLogger(os.path.join(args.log_dir, 'test.csv'), train_data.n_groups, mode=mode)
-    for i in range(nstart):
-        train(model, criterion, data, logger, train_csv_logger, val_csv_logger, test_csv_logger, args, epoch_offset=epoch_offset)
-
-    train_csv_logger.close()
-    val_csv_logger.close()
-    test_csv_logger.close()
+    acc_rec=train(model, criterion, data, logger, train_csv_logger, val_csv_logger, test_csv_logger, args, epoch_offset=epoch_offset)
+    return acc_rec
 
 def check_args(args):
     if args.shift_type == 'confounder':
@@ -203,6 +148,3 @@ def check_args(args):
     elif args.shift_type.startswith('label_shift'):
         assert args.minority_fraction
         assert args.imbalance_ratio
-
-
-#run_dro()
