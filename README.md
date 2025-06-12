@@ -101,7 +101,7 @@ Then, you can run
 python app2_waterbird.py --method FAIR --nstart 10 --sample 30000
 ```
 
-to conduct repeated training trials of our FAIR linear logistic regression model, each time using the randomly sampled 30,000 data from the waterbird dataset saved in `./res`. We also support other methods, including LASSO, IRM, and GroupDRO, which are all trained on the feature extracted by ResNet50 with the linear model. The code of GroupDRO is cloned from [here](https://github.com/kohpangwei/group_DRO). You can apply the methods above by changing the instructions. 
+to conduct repeated training trials of our FAIR linear logistic regression model, each time randomly sampling 30,000 data from each training environment saved in `./res`. We also support other methods, including LASSO, IRM, and GroupDRO, which are all trained on the feature extracted by ResNet50 with the linear model. The code of GroupDRO is cloned from [here](https://github.com/kohpangwei/group_DRO). You can apply the methods above by changing the instructions. 
 
 The test accuracy during the iteration of training will be saved in `./saved_results/waterbird_{method}.csv`. Each column in the result of FAIR and IRM represents the test accuracy curve of each repeated experiment, and each row represents the test accuracy at the corresponding iteration. While each row in result of LASSO represents test accuracy of models trained on oracle environment env* , env1, env2 and env1+env2, respectively. The mean and std accuracy reported in the paper is calculated by the test accuracy of the final iteration in each trial. The training curve can be reproduced by plotting the mean of data in `\saved_results`.
 
