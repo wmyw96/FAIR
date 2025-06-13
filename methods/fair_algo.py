@@ -264,12 +264,13 @@ class FairGumbelAlgo(object):
 					gate_rec.append(sigmoid(logits))
 
 
-			if (it + 1) % eval_iter == 0:
+			if (it) % eval_iter == 0:
 				self.model.eval()
 
 				if eval_metric is not None:
 					valid_loss = []
 					for e in range(len(valid_xs)):
+						print(len(valid_xs))
 						preds = []
 						# generate multiple gates and predictions
 						for k in range(gate_samples):
@@ -277,6 +278,7 @@ class FairGumbelAlgo(object):
 							pred = self.model(gate * valid_xs[e], pred=True)
 							preds.append(pred.detach().cpu().numpy())
 						out = sum(preds) / len(preds)
+						print(valid_ys[e].shape, out.shape)
 						valid_loss.append(eval_metric(out, valid_ys[e]))
 
 					test_loss = []

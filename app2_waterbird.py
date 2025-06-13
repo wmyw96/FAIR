@@ -153,13 +153,14 @@ def main():
         for i in range(nstart):
             print("restart:",i)
             random_row=np.random.choice(x[0].shape[0],size=sample,replace=False)
-            test=(x_test,y_test)
+            test=([x_test],[y_test])
             model = FairLinearClassification(2, 500)
             algo = FairGumbelAlgo(num_envs=2, dim_x=500, model=model, gamma=200, loss=bce_loss, hyper_params=hyper_params)
             packs = algo.run_gumbel(([x[0][random_row],x[1][random_row]],
             [y[0][random_row],y[1][random_row]]), 
-            eval_metric=misclass, me_valid_data=test, me_test_data=test, eval_iter=eval_freq, log=True)
+            eval_metric=misclass, me_valid_data=test, me_test_data=test, eval_iter=eval_freq, log=False)
             res[f'restart: {i}']=1-np.mean(packs['loss_rec'],axis=1)
+            print(res[f'restart: {i}'])
         res.to_csv(save_path+'/waterbird_fair.csv', sep=',', index=False, header=True)
     elif(mode=='GroupDRO'):
             res=pd.DataFrame()
