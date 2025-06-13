@@ -170,7 +170,7 @@ class FairGumbelAlgo(object):
 		assert self.model.num_envs == num_envs
 		assert self.model.dim_x == dim_x
 
-	def run_gumbel(self, me_train_data, eval_metric=None, me_valid_data=None, me_test_data=None, varmask=None, save_iter=100, eval_iter=1000, gate_samples=30, device='cpu', log=False):
+	def run_gumbel(self, me_train_data, eval_metric=None, me_valid_data=None, me_test_data=None, varmask=None, save_iter=100, eval_iter=1000, gate_samples=100, device='cpu', log=False):
 		# Build multi-environment training dataset that contains 'self.num_envs' number of environments
 		features, responses = me_train_data		
 		assert len(features) == self.num_envs
@@ -264,7 +264,7 @@ class FairGumbelAlgo(object):
 					gate_rec.append(sigmoid(logits))
 
 
-			if (it) % eval_iter == 0:
+			if (it + 1) % eval_iter == 0:
 				self.model.eval()
 
 				if eval_metric is not None:
@@ -278,7 +278,6 @@ class FairGumbelAlgo(object):
 							pred = self.model(gate * valid_xs[e], pred=True)
 							preds.append(pred.detach().cpu().numpy())
 						out = sum(preds) / len(preds)
-						print(valid_ys[e].shape, out.shape)
 						valid_loss.append(eval_metric(out, valid_ys[e]))
 
 					test_loss = []
