@@ -15,7 +15,13 @@ import csv
 import os
 from methods.fair_algo import *
 import logging 
+import random
 
+seed=100
+random.seed(seed)
+np.random.seed(seed)
+torch.manual_seed(seed)
+torch.cuda.manual_seed_all(seed) 
 
 class FairLinearClassification(FairModel):
 	def __init__(self, num_envs, dim_x):

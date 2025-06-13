@@ -93,15 +93,15 @@ We then use the pre-trained [ResNet50](https://download.pytorch.org/models/resne
 python generate_waterbird.py
 ```
 
-The contents of waterbird and landbird and the generated datasets can be found at [Google Drive](https://drive.google.com/drive/folders/1z5ZC1da-wOzOQYjdoyBKMNS4zOlNTlx_), where we split the dataset into training and testing sets, and respectively stored the bird labels, background labels, and image features in the objective, background, and feature directories.
+The contents of waterbird and landbird and the generated datasets can be found at [Google Drive](https://drive.google.com/drive/folders/1z5ZC1da-wOzOQYjdoyBKMNS4zOlNTlx_), where we split the dataset into training and testing sets, and respectively stored the bird labels, background labels, and image features in the objective, background, and feature directories. Each training environment contains 50,000 extracted features, and each test set environment contains 30,000 extracted features.
 
 Then, you can run 
 
 ```bash
-python app2_waterbird.py --method FAIR --nstart 10 --sample 10000
+python app2_waterbird.py --method FAIR --nstart 10 --sample 30000
 ```
 
-to conduct repeated training trials of our FAIR linear logistic regression model, each time using the randomly sampled data from the waterbird dataset saved in `./res`. We also support other methods, including LASSO, IRM, and GroupDRO, which are all trained on the feature extracted by ResNet50 with the linear model. The code of GroupDRO is cloned from [here](https://github.com/kohpangwei/group_DRO). You can apply the methods above by changing the instructions. 
+to conduct repeated training trials of our FAIR linear logistic regression model, each time randomly sampling 30,000 data from each training environment saved in `./res`. We also support other methods, including LASSO, IRM, and GroupDRO, which are all trained on the feature extracted by ResNet50 with the linear model. The code of GroupDRO is cloned from [here](https://github.com/kohpangwei/group_DRO). You can apply the methods above by changing the instructions. 
 
 The test accuracy during the iteration of training will be saved in `./saved_results/waterbird_{method}.csv`. Each column in the result of FAIR and IRM represents the test accuracy curve of each repeated experiment, and each row represents the test accuracy at the corresponding iteration. While each row in result of LASSO represents test accuracy of models trained on oracle environment env* , env1, env2 and env1+env2, respectively. The mean and std accuracy reported in the paper is calculated by the test accuracy of the final iteration in each trial. The training curve can be reproduced by plotting the mean of data in `\saved_results`.
 
