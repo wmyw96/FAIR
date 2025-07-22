@@ -1,6 +1,6 @@
 from data.model import *
 from methods.brute_force import brute_force
-from methods.fair_gumbel import *
+from methods.fair_algo import *
 from methods.tools import pooled_least_squares
 from utils import *
 import numpy as np
@@ -8,6 +8,7 @@ import os
 import argparse
 import time
 import pandas as pd
+from copy import deepcopy
 
 colors = [
 		'#ae1908',  # red
@@ -64,28 +65,20 @@ def augument_xye(xstr, ystr, n_train):
 	aug_e = np.concatenate([np.zeros((n_train, 1)), np.ones((n_train, 1))], 0)
 	return np.concatenate([aug_x, aug_y, aug_e], 1)
 
+def np_mse(x, y):
+	return np.mean(np.square(x - y))
+
+def torch_mse(y_hat, y):
+	return 0.5 * torch.mean((y_hat - y) ** 2)
+
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--seed", help="random seed", type=int, default=1234)
 parser.add_argument("--n", help="number of samples", type=int, default=1000)
-parser.add_argument("--batch_size", help="batch size", type=int, default=36)
-parser.add_argument("--dim_x", help="number of explanatory vars", type=int, default=60)
-parser.add_argument("--lr", help="learning rate", type=float, default=1e-3)
-parser.add_argument('--init_temp', help='initial temperature', type=float, default=5)
-parser.add_argument('--final_temp', help='final temperature', type=float, default=0.1)
-parser.add_argument('--gamma', help='hyper parameter gamma', type=float, default=36)
-parser.add_argument("--log", help="show log", type=bool, default=True)
-parser.add_argument("--diter", help="discriminator iters", type=int, default=3)
-parser.add_argument("--niter", help="number of interations", type=int, default=50000)
-parser.add_argument("--riter", help="number of interations", type=int, default=20000)
-parser.add_argument("--threshold", help="threshold", type=float, default=0.9)
 parser.add_argument("--nrep", help="n replications in mode 3", type=int, default=30)
 parser.add_argument("--mode", help="mode", type=int, default=1)
 
 args = parser.parse_args()
 
-np.random.seed(args.seed)
-torch.manual_seed(args.seed)
 
 def load_data_pd(dir_prefix, envs_name):
 	data = []
@@ -129,66 +122,17 @@ xs_test, ys_test = [xs[6], xs[7], xs[8], xs[9], xs[10]], [ys[6], ys[7], ys[8], y
 n_train, n_valid = args.n, args.n * 3 // 10
 dim_x = np.shape(xs_train[0])[1]
 
-xs0, ys0 = get_bootstrap_sample(xs_train, ys_train, n_train + n_valid, replace=False)
-xs1, ys1, xstt, ystt = standardize(xs0, ys0, xs_test, ys_test)
-
 np.set_printoptions(precision=3)
 
+hp_linear = deepcopy(aos_default_hyper_params)
+
+hp_nn = deepcopy(aos_default_hyper_params)
+hp_nn['offset'] = -1
+hp_nn['niters'] = 100000
+hp_linear['final_temp'] = 0.1
+hp_nn['final_temp'] = 0.1
+
 if args.mode == 1:
-	# linear model estimation
-	beta = pooled_least_squares(xs1, ys1)
-	beta1 = least_squares(xs1[0], ys1[0])
-	beta2 = least_squares(xs1[1], ys1[1])
-	betastar = pooled_least_squares(xs1, ys1, [0, 1, 2, 3, 4])
-
-	packs = fair_ll_sgd_gumbel_uni(xs1, ys1, hyper_gamma=args.gamma, learning_rate=args.lr, niters_d=args.diter,
-								niters=args.niter, batch_size=args.batch_size, init_temp=args.init_temp,
-								final_temp=args.final_temp, iter_save=100, log=True)
-	mask = packs['gate_rec'][-1] > 0.9
-	var_set = (np.arange(np.shape(beta)[0]))[mask].tolist()
-	print(var_set)
-	betafair = pooled_least_squares(xs1, ys1, var_set)
-
-	print(f'causal: risk = {linear_eval_worst_test(xstt, ystt, betastar)}, beta = {betastar}')
-	print(f'fair: risk = {linear_eval_worst_test(xstt, ystt, betafair)}, beta = {betafair}')
-	print(f'pooled: risk = {linear_eval_worst_test(xstt, ystt, beta)}, beta = {beta}')
-	print(f'e1: risk = {linear_eval_worst_test(xstt, ystt, beta1)}, beta = {beta1}')
-	print(f'e2: risk = {linear_eval_worst_test(xstt, ystt, beta2)}, beta = {beta2}')
-elif args.mode == 2:
-	xstr, ystr, validx, validy = train_valid_split(xs1, ys1, n_train)
-	px = np.concatenate(xstr, 0)
-
-	for e in range(5):
-		xstt[e][:, 5+e] -= np.mean(xstt[e][:, 5+e])
-
-	eval_data = (validx, validy, xstt, ystt)
-
-	if True:
-		mask1 = np.ones((dim_x, ))
-		packs1 = fairnn_sgd_gumbel_refit(xstr, ystr, mask1, eval_data, learning_rate=args.lr, niters=args.riter, 
-									batch_size=args.batch_size, log=False)
-		eval_loss1 = packs1['loss_rec']
-		print('ERM Test Error: {}'.format((eval_loss1[np.argmin(eval_loss1[:, 0]), 1:])))
-
-		mask2 = np.array([1, 1, 1, 1, 1] + [0] * (dim_x - 5))
-		packs2 = fairnn_sgd_gumbel_refit(xstr, ystr, mask2, eval_data, learning_rate=args.lr, niters=args.riter, 
-									batch_size=args.batch_size, log=False)
-		eval_loss2 = packs2['loss_rec']
-		print('Causal Test Error: {}'.format(np.max(eval_loss2[np.argmin(eval_loss2[:, 0]), 1:])))
-
-		mask3 = np.array([1, 1, 1] + [0] * (dim_x - 3))
-		packs3 = fairnn_sgd_gumbel_refit(xstr, ystr, mask3, eval_data, learning_rate=args.lr, niters=args.riter, 
-									batch_size=args.batch_size, log=False)
-		eval_loss3 = packs3['loss_rec']
-		print('Linear Causal Test Error: {}'.format(np.max(eval_loss3[np.argmin(eval_loss3[:, 0]), 1:])))
-
-
-	packs3 = fairnn_sgd_gumbel_uni(xstr, ystr, eval_data=eval_data, depth_g=1, width_g=128, depth_f=2, width_f=196, offset=-1,
-						hyper_gamma=args.gamma, learning_rate=args.lr, niters=args.niter, niters_d=args.diter, niters_g=1, anneal_rate=0.993, 
-						batch_size=args.batch_size, init_temp=args.init_temp, final_temp=args.final_temp, iter_save=100, log=True)
-	mask3 = (packs3['gate_rec'][-1] > args.threshold) * 1.0
-	print(mask3)
-elif args.mode == 3:
 
 	n_rep = args.nrep
 	myvarsel = np.zeros((n_rep, 4, dim_x))
@@ -202,6 +146,9 @@ elif args.mode == 3:
 		xs1, ys1, xstt, ystt = standardize(xs0, ys0, xs_test, ys_test)
 		xstr, ystr, validx, validy = train_valid_split(xs1, ys1, n_train)
 
+		valid = ((validx, ), (validy,))
+		test = (xstt, ystt)
+
 		for e in range(5):
 			xstt[e][:, 5+e] -= np.mean(xstt[e][:, 5+e])
 		eval_data = (validx, validy, xstt, ystt)
@@ -209,7 +156,7 @@ elif args.mode == 3:
 		# linear erm
 		beta = pooled_least_squares(xstr, ystr)
 		risk[exp_id, 0, :] = linear_eval_worst_test(xstt, ystt, beta)
-		print(f'n = {args.n}, exp_id = {exp_id}, ERM risk = {np.max(risk[exp_id, 0, :])}')
+		print(f'n = {args.n}, exp_id = {exp_id}, Pooled LLS risk = {np.max(risk[exp_id, 0, :])}')
 
 		# linear oracle
 		beta1 = pooled_least_squares(xstr, ystr, [0, 1, 2, 3, 4])
@@ -218,26 +165,30 @@ elif args.mode == 3:
 
 		# nonlinear erm
 		mask3 = np.ones((dim_x, ))
-		packs3 = fairnn_sgd_gumbel_refit(xstr, ystr, mask3, eval_data, learning_rate=args.lr, niters=args.riter, 
-									batch_size=args.batch_size, log=False)
+		packs3 = nn_least_squares_refit(xstr, ystr, mask3, eval_data, learning_rate=1e-3, niters=20000, 
+									batch_size=64, log=False)
 		eval_loss3 = packs3['loss_rec']
 		risk[exp_id, 4, :] = eval_loss3[np.argmin(eval_loss3[:, 0]), 1:]
-		print(f'n = {args.n}, exp_id = {exp_id}, ERM risk = {np.max(risk[exp_id, 4, :])}')
+		print(f'n = {args.n}, exp_id = {exp_id}, Pooled LS-NN risk = {np.max(risk[exp_id, 4, :])}')
 
 		# nonlinear oracle
 		mask6 = np.array([1] * 5 + [0] * (dim_x - 5))
-		packs6 = fairnn_sgd_gumbel_refit(xstr, ystr, mask6, eval_data, learning_rate=args.lr, niters=args.riter, 
-									batch_size=args.batch_size, log=False)
+		packs6 = nn_least_squares_refit(xstr, ystr, mask6, eval_data, learning_rate=1e-3, niters=20000, 
+									batch_size=64, log=False)
 		eval_loss6 = packs6['loss_rec']
 		risk[exp_id, 7, :] = eval_loss6[np.argmin(eval_loss6[:, 0]), 1:]
 		print(f'n = {args.n}, exp_id = {exp_id}, Oracle-Nonlinear risk = {np.max(risk[exp_id, 7, :])}')
 
 
 		# fair-linear
-		packs1 = fair_ll_sgd_gumbel_uni(xstr, ystr, hyper_gamma=args.gamma, learning_rate=args.lr, niters_d=args.diter,
-									niters=args.niter, batch_size=args.batch_size, init_temp=args.init_temp,
-									final_temp=args.final_temp, iter_save=100, log=False)
-		beta2 = packs1['weight']
+		#packs1 = fair_ll_sgd_gumbel_uni(xstr, ystr, hyper_gamma=args.gamma, learning_rate=args.lr, niters_d=args.diter,
+		#							niters=args.niter, batch_size=args.batch_size, init_temp=args.init_temp,
+		#							final_temp=args.final_temp, iter_save=100, log=False)
+		fair_linear = FairMLP(2, dim_x, 0, 0, 0, 0)
+		algo_linear = FairGumbelAlgo(2, dim_x, fair_linear, 36, torch_mse, hp_linear)
+		packs1 = algo_linear.run_gumbel((xstr, ystr), eval_metric=np_mse, me_valid_data=valid, me_test_data=test, eval_iter=hp_linear['niters']//10, gate_samples=20)
+
+		beta2 = np.reshape(fair_linear.g.relu_stack.weight.detach().cpu().numpy(), (-1)) * packs1['gate_rec'][-1, :]
 		risk[exp_id, 2, :] = linear_eval_worst_test(xstt, ystt, beta2)
 		print(f'n = {args.n}, exp_id = {exp_id}, FAIR-Linear risk = {np.max(risk[exp_id, 2, :])}')
 
@@ -246,16 +197,21 @@ elif args.mode == 3:
 		myvarsel[exp_id, 0, :] = mask2
 		print(f'n = {args.n}, exp_id = {exp_id}, FAIR-Linear Var Selection = {myvarsel[exp_id, 0, :]}')
 
-		packs2 = fairnn_sgd_gumbel_refit(xstr, ystr, mask2, eval_data, learning_rate=args.lr, niters=args.riter, 
-									batch_size=args.batch_size, log=False)
+		packs2 = nn_least_squares_refit(xstr, ystr, mask2, eval_data, learning_rate=1e-3, niters=20000, 
+									batch_size=64, log=False)
 		eval_loss2 = packs2['loss_rec']
 		risk[exp_id, 3, :] = eval_loss2[np.argmin(eval_loss2[:, 0]), 1:]
 		print(f'n = {args.n}, exp_id = {exp_id}, FAIR-Linear-NN-Refit risk = {np.max(risk[exp_id, 3, :])}')
 
 		# fair-nn
-		packs4 = fairnn_sgd_gumbel_uni(xstr, ystr, eval_data=eval_data, depth_g=1, width_g=128, depth_f=2, width_f=196, offset=-1,
-										hyper_gamma=args.gamma, learning_rate=args.lr, niters=args.niter, niters_d=args.diter, niters_g=1, anneal_rate=0.993, 
-										batch_size=args.batch_size, init_temp=args.init_temp, final_temp=args.final_temp, iter_save=100, log=False)
+		#packs4 = fairnn_sgd_gumbel_uni(xstr, ystr, eval_data=eval_data, depth_g=1, width_g=128, depth_f=2, width_f=196, offset=-1,
+		#								hyper_gamma=args.gamma, learning_rate=args.lr, niters=args.niter, niters_d=args.diter, niters_g=1, anneal_rate=0.993, 
+		#								batch_size=args.batch_size, init_temp=args.init_temp, final_temp=args.final_temp, iter_save=100, log=False)
+
+		fair_nn = FairMLP(2, dim_x, 1, 128, 2, 196)
+		algo_nn = FairGumbelAlgo(2, dim_x, fair_nn, 36, torch_mse, hp_nn)
+		packs4 = algo_nn.run_gumbel((xstr, ystr), eval_metric=np_mse, me_valid_data=valid, me_test_data=test, eval_iter=hp_nn['niters']//10, gate_samples=20)
+
 		eval_loss4 = packs4['loss_rec']
 		risk[exp_id, 5, :] = eval_loss4[-1, 1:]
 		print(f'n = {args.n}, exp_id = {exp_id}, FAIR-NN risk = {np.max(risk[exp_id, 5, :])}')
@@ -265,8 +221,8 @@ elif args.mode == 3:
 		myvarsel[exp_id, 1, :] = mask5
 		print(f'n = {args.n}, exp_id = {exp_id}, FAIR-NN Var Selection = {myvarsel[exp_id, 1, :]}')
 
-		packs5 = fairnn_sgd_gumbel_refit(xstr, ystr, mask5, eval_data, learning_rate=args.lr, niters=args.riter, 
-									batch_size=args.batch_size, log=False)
+		packs5 = nn_least_squares_refit(xstr, ystr, mask5, eval_data, learning_rate=1e-3, niters=20000, 
+									batch_size=64, log=False)
 		eval_loss5 = packs5['loss_rec']
 		risk[exp_id, 6, :] = eval_loss5[np.argmin(eval_loss5[:, 0]), 1:]
 		print(f'n = {args.n}, exp_id = {exp_id}, FAIR-NN-Refit risk = {np.max(risk[exp_id, 6, :])}')
@@ -282,7 +238,7 @@ elif args.mode == 3:
 	np.save(f'saved_results/lightchamber{args.n}_risk.npy', risk)
 	np.save(f'saved_results/lightchamber{args.n}_var.npy', myvarsel)
 
-elif args.mode == 4:
+elif args.mode == 2:
 	n_rep = args.nrep
 	myvarsel = np.zeros((n_rep, 4, dim_x))
 	risk = np.zeros((n_rep, 8, 5))
@@ -302,7 +258,7 @@ elif args.mode == 4:
 		aug_data = augument_xye(xstr, ystr, n_train)
 		np.savetxt(f"chamber_tmp/data_tmp_{exp_id}.csv", aug_data, delimiter=",")
 
-elif args.mode == 6:
+elif args.mode == 3:
 	risk = np.load(f'saved_results/lightchamber{args.n}_risk.npy')
 	risk = np.mean(risk, 0)
 	print(risk)
@@ -365,7 +321,7 @@ elif args.mode == 6:
 	ax.plot(angles, values, colors[5], linewidth=linewd, linestyle='solid')
 	ax.fill(angles, values, colors[5], alpha=0.25, label="PoolLS-NN")
 
-	plt.yticks([0.71, 0.87, 0.91, 0.95], ['0.71', '0.87', '0.91', '0.95'], color="gray", size=12)
+	plt.yticks([0.73, 0.87, 0.91, 0.95], ['0.73', '0.87', '0.91', '0.95'], color="gray", size=12)
 	plt.ylim(0.67,1)
 
 	#values = (1-risk[0, :]).tolist()
@@ -373,7 +329,7 @@ elif args.mode == 6:
 	#ax.plot(angles, values, colors[5], linewidth=1, linestyle='solid', label="PoolLS-Linear")
 
 	plt.legend(loc='upper right', bbox_to_anchor=(1.3, 1.15))	
-	plt.savefig("saved_results/fig6b.pdf", bbox_inches='tight')
+	plt.savefig("saved_results/chamber-b.pdf", bbox_inches='tight')
 
 elif args.mode == 7:
 	vec_n = [200, 500, 1000, 2000]

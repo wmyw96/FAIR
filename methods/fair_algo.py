@@ -270,7 +270,6 @@ class FairGumbelAlgo(object):
 				if eval_metric is not None:
 					valid_loss = []
 					for e in range(len(valid_xs)):
-						print(len(valid_xs))
 						preds = []
 						# generate multiple gates and predictions
 						for k in range(gate_samples):
@@ -306,3 +305,112 @@ class FairGumbelAlgo(object):
 				'loss_rec': np.array(loss_rec),
 				'model': self.model}
 		return ret
+
+
+
+def nn_least_squares_refit(features, responses, mask, eval_data, depth_g=1, width_g=128,
+						learning_rate=1e-3, niters=10000, weight_decay_g=1e-3,
+						batch_size=64, log=False):
+	'''
+		Refit the model using least squares and neural network on varaibles selected by mask
+
+		Parameter
+		----------
+		features : list 
+			list of numpy matrices with shape (n_k, p) representing the explanatory variables
+		responses : list
+			list of numpy matrices with shape (n_k, 1) representing the response variable
+		eval_data : tuple
+			tuple of (valid_x, valid_y, test_x, test_y): valid_x, valid_y are all numpy array, 
+			test_x and test_y can be list or numpy array
+
+		depth_g : int
+			generator depth
+		width_g : int
+			generator width
+		weight_decay_g : float
+			weight decay hyper-parameter for generator
+
+		hyper_gamma : float
+			hyper-parameter gamma control the degree of invariance
+		learning_rate : float
+			learning rate for stochastic gradient descent
+		niters : int
+			number of outer iterations
+
+		batch_size : int
+			batch_size for stochastic gradient descent
+
+		log : bool
+			whether to show logs during training
+
+		Returns
+		----------
+		a dict collecting things of interests
+	'''
+	num_envs = len(features)
+	dim_x = np.shape(features[0])[1]
+
+	fixed_gate = torch.reshape(torch.tensor(mask).float(), (1, dim_x))
+
+	model = ReLUMLP(dim_x, depth_g, width_g)
+	optimizer_g = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay_g)
+
+	# construct dataset from numpy array
+	dataset = MultiEnvDataset(features, responses)
+	
+	valid_x, valid_y, test_x, test_y = eval_data
+	valid_x_th = torch.tensor(valid_x).float()
+
+	if isinstance(test_x, list):
+		test_x_ths = [torch.tensor(x).float() for x in test_x]
+	else:
+		test_x_ths = torch.tensor(test_x).float()
+
+	eval_iter = niters // 20
+	
+	loss_rec = []
+
+	if log:
+		it_gen = tqdm(range(niters))
+	else:
+		it_gen = range(niters)
+
+	for it in it_gen:
+		# train the neural network using least squares loss
+		optimizer_g.zero_grad()
+		model.train()
+
+		xs, ys = dataset.next_batch(batch_size)
+		cat_y = torch.cat(ys, 0)
+		out_g = model(torch.cat([fixed_gate * x for x in xs], axis=0))
+
+		loss = 0.5 * torch.mean((out_g - cat_y) ** 2)
+		loss.backward()
+
+		optimizer_g.step()
+
+		# evaluate the model
+		if (it + 1) % eval_iter == 0:
+			preds = []
+			model.eval()
+			out = model(fixed_gate * valid_x_th).detach().cpu().numpy()
+			valid_loss = np.mean(np.square(out - valid_y))
+
+			# calculate test loss
+			test_loss = []
+			if isinstance(test_x_ths, list):
+				for e in range(len(test_x_ths)):
+					out = model(fixed_gate * test_x_ths[e]).detach().cpu().numpy()
+					test_loss.append(np.mean(np.square(out - test_y[e])))
+			else:
+				out = model(fixed_gate * test_x_ths).detach().cpu().numpy()
+				test_loss = [np.mean(np.square(out - test_y))]
+
+			loss_rec.append([valid_loss] + test_loss)
+			if log:
+				print(f'iter = {it}, valid_loss = {valid_loss}, test_loss = {test_loss}')
+
+	ret = {'model': model, 'loss_rec': np.array(loss_rec)}
+
+	return ret

@@ -116,13 +116,43 @@ def print_gate_during_training(dim_x, graph_sets, gate, tofile=None):
 	it_arr = np.arange(it_display)
 
 	for i in range(dim_x):
-		ax1.plot(it_arr * 100, gate[:it_display, i], color=color_tuple[rsp[i]])
+		ax1.plot(it_arr * 100, gate[:it_display, i], color=color_tuple[rsp[i]], linewidth=0.5)
 
-	ax1.set_xlabel(r'Iterations')
+	ax1.set_xlabel(r'Number of iterations')
 	ax1.set_ylabel('sigmoid(logits)')
-	plt.ylim(0, 1)
+	plt.ylim(0, 1.1)
 
 	if tofile is None:
 		plt.show()
 	else:
 		plt.savefig(tofile, bbox_inches='tight')
+
+
+
+def broadcast(beta_restricted, var_inds, p):
+	beta_broadcast = np.zeros(p)
+	if len(var_inds) == 1:
+		beta_broadcast[var_inds[0]] = beta_restricted
+		return beta_broadcast
+	for i, ind in enumerate(var_inds):
+		beta_broadcast[ind] = beta_restricted[i]
+	return beta_broadcast
+
+
+
+aos_default_hyper_params = {
+	'gumbel_lr': 1e-3,
+	'model_lr': 1e-3,
+	'weight_decay_g': 1e-3, 
+	'weight_decay_f': 1e-3,
+	'niters': 50000,
+	'diters': 3,
+	'giters': 1,
+	'batch_size': 64,
+	'gamma': 36,
+	'init_temp': 5,
+	'final_temp': 0.05,
+	'offset': -3,
+	'anneal_iter': 100,
+	'anneal_rate': 0.993,
+}

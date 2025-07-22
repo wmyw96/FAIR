@@ -196,7 +196,7 @@ class AdditiveStructuralCausalModel:
 			return z
 
 
-	def visualize(self, of_set):
+	def visualize(self, of_set, path=None):
 		G = nx.DiGraph()
 
 		for i in range(self.num_vars - 1):
@@ -231,11 +231,14 @@ class AdditiveStructuralCausalModel:
 				idx -= 1
 			if node_colors[idx] == '#9acdc4' and i in of_set:
 				node_colors[idx] = '#ec813b'
-
+		plt.figure(figsize=(6, 4))
 		pos = nx.spring_layout(G)  # Choose a layout algorithm
 		nx.draw(G, pos=pos, with_labels=True, arrows=True,
 				node_color=node_colors)
-		plt.show()
+		if path is not None:
+			plt.savefig(path)
+		else:
+			plt.show()
 
 
 
@@ -384,7 +387,7 @@ class CharysanSCM:
 			return z
 
 
-	def visualize(self):
+	def visualize(self, path=None):
 		G = nx.DiGraph()
 
 		num_vars = self.num_parents + self.num_children + self.num_other
@@ -414,9 +417,13 @@ class CharysanSCM:
 		node_colors.append('white')
 
 		pos = nx.spring_layout(G)  # Choose a layout algorithm
+		plt.figure(figsize=(6, 4))
 		nx.draw(G, pos=pos, with_labels=True, arrows=True,
 				node_color=node_colors)
-		plt.show()
+		if path is not None:
+			plt.savefig(path)
+		else:
+			plt.show()
 
 
 def generate_nonlinear_SCM(num_envs, nparent, nchild, nother=0):
@@ -432,7 +439,7 @@ def generate_nonlinear_SCM(num_envs, nparent, nchild, nother=0):
 
 def random_assignment_matrix(num_vars, ratio, function_id_max, coefficient_max, degree_max, reference_g=None):
 	function_matrix = np.zeros((num_vars, num_vars), dtype=np.int32)
-	coefficient_matrix = np.zeros((num_vars, num_vars), dtype=np.float)
+	coefficient_matrix = np.zeros((num_vars, num_vars))
 	if reference_g is None:
 		for i in range(num_vars):
 			cnt = 0
@@ -555,13 +562,13 @@ def SCM_ex1():
 	num_vars = 3
 	y_index = 1
 	func_mat = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0]], dtype=np.int32)
-	coeff1 = np.array([[1, 0, 0], [2, 1, 0], [1, -0.3, 1]], dtype=np.float)
-	coeff2 = np.array([[1.5, 0, 0], [2, 1, 0], [0.3, 0.7, 0.3]], dtype=np.float)
+	coeff1 = np.array([[1, 0, 0], [2, 1, 0], [1, -0.3, 1]])
+	coeff2 = np.array([[1.5, 0, 0], [2, 1, 0], [0.3, 0.7, 0.3]])
 	models = [
 		AdditiveStructuralCausalModel(num_vars, coeff1, func_mat, y_index),
 		AdditiveStructuralCausalModel(num_vars, coeff2, func_mat, y_index)
 	]
-	return models, np.array([2, 0], dtype=np.float)
+	return models, np.array([2, 0])
 
 
 def sample_from_SCM(models, n, index=0, shuffle=False):

@@ -153,6 +153,7 @@ class EmpiricalRiskMinimizer(object):
 
 
 from sklearn.linear_model._base import LinearModel
+
 class AnchorRegression(LinearModel):
     def __init__(self, lamb=1, fit_intercept=False, normalize=False, copy_X=False):
         self.lamb = lamb
@@ -161,7 +162,8 @@ class AnchorRegression(LinearModel):
         self.copy_X = copy_X
 
     def fit(self, X, y, A=None):
-        X, y = self._validate_data(X, y, y_numeric=True)
+        #from sklearn.utils.validation import validate_data
+        #X, y = validate_data(self, X, y, y_numeric=True)
 
         #X, y, X_offset, y_offset, X_scale = self._preprocess_data(
         #    X, y, fit_intercept=self.fit_intercept, normalize=self.normalize,

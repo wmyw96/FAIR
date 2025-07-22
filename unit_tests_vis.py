@@ -12,7 +12,7 @@ plt.rc('font', size=16)
 rc('text', usetex=True)
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--mode", help="mode", type=int, default=1)
+parser.add_argument("--exp_id", help="exp id", type=int, default=1)
 parser.add_argument("--ntrial", help="repeat", type=int, default=50)
 args = parser.parse_args()
 
@@ -25,7 +25,7 @@ color_tuple = [
 	'#e5a84b',   # yellow
 ]
 
-if args.mode == 1:
+if args.exp_id == 1:
 	results = np.load('saved_results/unit_test_1.npy')
 
 	num_n = results.shape[0]
@@ -86,7 +86,7 @@ if args.mode == 1:
 
 
 
-if args.mode == 2:
+if args.exp_id == 2:
 	results = np.load('saved_results/unit_test_2.npy')
 
 	num_n = results.shape[0]
@@ -125,7 +125,7 @@ if args.mode == 2:
 		'#ae1908',
 		'#ec813b',
 		'#e5a84b',
-		'#6bb392',
+		'#008000',
 		'gray',
 	]
 
@@ -155,12 +155,12 @@ if args.mode == 2:
 	plt.show()
 
 
-if args.mode == 3:
+if args.exp_id == 3:
 	results = np.load('saved_results/unit_test_3.npy')
 	num_n = results.shape[0]
 	num_sml = results.shape[1]
 
-	vec_n = [1000, 2000, 3000, 5000]
+	vec_n = [1000, 2000, 4000, 8000]
 	method_name = ["FAIR-GB", "FAIR-RF", "Oracle", "Pool-LS"]
 	method_idx = [2, 3, 0, 1]
 
@@ -203,7 +203,7 @@ if args.mode == 3:
 			metric += [np.median(measures)]
 		ax1.plot(vec_n, metric, linestyle=lines[j], marker=markers[j], label=method_name[j], color=colors[j])
 
-	#plt.xticks(ticks=[1000, 3000, 5000], fontsize=20)
+	plt.xticks(ticks=[1000, 2000, 4000, 8000], fontsize=20)
 	ax1.set_xlabel('$n$', fontsize=22)
 	#ax1.set_yscale("log")
 	#ax1.set_xscale("log")
@@ -214,13 +214,13 @@ if args.mode == 3:
 
 
 
-if args.mode == 4:
+if args.exp_id == 4:
 	results = np.load('saved_results/unit_test_4.npy')
 	num_n = results.shape[0]
 	num_sml = results.shape[1]
 
 	#vec_n = [1000, 2000, 3000, 5000, 10000]
-	vec_n = [10000, 5000, 3000, 2000, 1000]
+	vec_n = [1000, 2000, 4000, 8000]
 
 	method_name = ["FAIR-GB", "FAIR-RF", "Oracle", "Pool-LS"]
 	method_idx = [2, 3, 0, 1]
@@ -265,12 +265,12 @@ if args.mode == 4:
 			metric += [np.median(measures)]
 		#if mid == 3:
 		#	metric[0] = 0.2635995550394437
-		ax1.plot(np.array(vec_n)[1:], np.array(metric)[1:], linestyle=lines[j], marker=markers[j], label=method_name[j], color=colors[j])
+		ax1.plot(np.array(vec_n), np.array(metric), linestyle=lines[j], marker=markers[j], label=method_name[j], color=colors[j])
 
 	#plt.xticks(ticks=[1000, 3000, 5000], fontsize=20)
 	ax1.set_xlabel('$n$', fontsize=22)
 	#ax1.set_yscale("log")
-	ax1.set_xscale("log")
+	#ax1.set_xscale("log")
 	ax1.set_yticks(np.array([4e-2, 1e-1, 0.5, 1.0]))
 
 	ax1.legend(loc='best')
