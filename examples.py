@@ -1,7 +1,6 @@
 from data.model import *
 from methods.tools import pooled_least_squares
 from methods.fair_algo import *
-from methods.fair_gumbel import *
 from utils import *
 import numpy as np
 import os

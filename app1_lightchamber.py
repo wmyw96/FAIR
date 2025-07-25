@@ -132,7 +132,7 @@ hp_nn['niters'] = 100000
 hp_linear['final_temp'] = 0.1
 hp_nn['final_temp'] = 0.1
 
-if args.mode == 1:
+if args.mode == 1 or args.mode == 0:
 
 	n_rep = args.nrep
 	myvarsel = np.zeros((n_rep, 4, dim_x))
@@ -181,27 +181,30 @@ if args.mode == 1:
 
 
 		# fair-linear
-		#packs1 = fair_ll_sgd_gumbel_uni(xstr, ystr, hyper_gamma=args.gamma, learning_rate=args.lr, niters_d=args.diter,
-		#							niters=args.niter, batch_size=args.batch_size, init_temp=args.init_temp,
-		#							final_temp=args.final_temp, iter_save=100, log=False)
-		fair_linear = FairMLP(2, dim_x, 0, 0, 0, 0)
-		algo_linear = FairGumbelAlgo(2, dim_x, fair_linear, 36, torch_mse, hp_linear)
-		packs1 = algo_linear.run_gumbel((xstr, ystr), eval_metric=np_mse, me_valid_data=valid, me_test_data=test, eval_iter=hp_linear['niters']//10, gate_samples=20)
+		# unless n = 1000, skip calculating FAIR-linear estimator
+		# set mode == 0 to maintain calculating
+		if args.mode == 0 or args.n == 1000:
+			#packs1 = fair_ll_sgd_gumbel_uni(xstr, ystr, hyper_gamma=args.gamma, learning_rate=args.lr, niters_d=args.diter,
+			#							niters=args.niter, batch_size=args.batch_size, init_temp=args.init_temp,
+			#							final_temp=args.final_temp, iter_save=100, log=False)
+			fair_linear = FairMLP(2, dim_x, 0, 0, 0, 0)
+			algo_linear = FairGumbelAlgo(2, dim_x, fair_linear, 36, torch_mse, hp_linear)
+			packs1 = algo_linear.run_gumbel((xstr, ystr), eval_metric=np_mse, me_valid_data=valid, me_test_data=test, eval_iter=hp_linear['niters']//10, gate_samples=20)
 
-		beta2 = np.reshape(fair_linear.g.relu_stack.weight.detach().cpu().numpy(), (-1)) * packs1['gate_rec'][-1, :]
-		risk[exp_id, 2, :] = linear_eval_worst_test(xstt, ystt, beta2)
-		print(f'n = {args.n}, exp_id = {exp_id}, FAIR-Linear risk = {np.max(risk[exp_id, 2, :])}')
+			beta2 = np.reshape(fair_linear.g.relu_stack.weight.detach().cpu().numpy(), (-1)) * packs1['gate_rec'][-1, :]
+			risk[exp_id, 2, :] = linear_eval_worst_test(xstt, ystt, beta2)
+			print(f'n = {args.n}, exp_id = {exp_id}, FAIR-Linear risk = {np.max(risk[exp_id, 2, :])}')
 
-		# fair-linear-nn-refit
-		mask2 = packs1['gate_rec'][-1] > 0.9
-		myvarsel[exp_id, 0, :] = mask2
-		print(f'n = {args.n}, exp_id = {exp_id}, FAIR-Linear Var Selection = {myvarsel[exp_id, 0, :]}')
+			# fair-linear-nn-refit
+			mask2 = packs1['gate_rec'][-1] > 0.9
+			myvarsel[exp_id, 0, :] = mask2
+			print(f'n = {args.n}, exp_id = {exp_id}, FAIR-Linear Var Selection = {myvarsel[exp_id, 0, :]}')
 
-		packs2 = nn_least_squares_refit(xstr, ystr, mask2, eval_data, learning_rate=1e-3, niters=20000, 
-									batch_size=64, log=False)
-		eval_loss2 = packs2['loss_rec']
-		risk[exp_id, 3, :] = eval_loss2[np.argmin(eval_loss2[:, 0]), 1:]
-		print(f'n = {args.n}, exp_id = {exp_id}, FAIR-Linear-NN-Refit risk = {np.max(risk[exp_id, 3, :])}')
+			packs2 = nn_least_squares_refit(xstr, ystr, mask2, eval_data, learning_rate=1e-3, niters=20000, 
+										batch_size=64, log=False)
+			eval_loss2 = packs2['loss_rec']
+			risk[exp_id, 3, :] = eval_loss2[np.argmin(eval_loss2[:, 0]), 1:]
+			print(f'n = {args.n}, exp_id = {exp_id}, FAIR-Linear-NN-Refit risk = {np.max(risk[exp_id, 3, :])}')
 
 		# fair-nn
 		#packs4 = fairnn_sgd_gumbel_uni(xstr, ystr, eval_data=eval_data, depth_g=1, width_g=128, depth_f=2, width_f=196, offset=-1,
@@ -331,7 +334,7 @@ elif args.mode == 3:
 	plt.legend(loc='upper right', bbox_to_anchor=(1.3, 1.15))	
 	plt.savefig("saved_results/chamber-b.pdf", bbox_inches='tight')
 
-elif args.mode == 7:
+elif args.mode == 4:
 	vec_n = [200, 500, 1000, 2000]
 	worst_risk = np.zeros((8, len(vec_n)))
 	for n_id in range(len(vec_n)):
@@ -363,10 +366,10 @@ elif args.mode == 7:
 	#ax1.set_xscale("log")
 
 	ax1.legend(loc='best')
-	fig.savefig("saved_results/fig6c.pdf", bbox_inches='tight')
+	fig.savefig("saved_results/chamber-c.pdf", bbox_inches='tight')
 
 
-elif args.mode == 8:
+elif args.mode == 5:
 	var_sel = np.load(f'saved_results/lightchamber1000_var.npy')
 
 	matrix = np.mean(var_sel, 0)
@@ -392,7 +395,7 @@ elif args.mode == 8:
 	rc('text', usetex=True)
 
 	# Define color maps for each column
-	colormaps = [colors[2]] * 5 + [colors[3]] * 2 + [colors[0]] + [colors[3]] * 3
+	colormaps = [colors[2]] * 5 + [colors[1]] * 2 + [colors[0]] + [colors[1]] * 3
 
 	fig, ax = plt.subplots()
 
@@ -430,9 +433,9 @@ elif args.mode == 8:
 
 	# Display the plot
 	plt.gca().invert_yaxis()
-	fig.savefig("saved_results/fig6d.pdf", bbox_inches='tight')
+	fig.savefig("saved_results/chamber-d.pdf", bbox_inches='tight')
 
-elif args.mode == 9:
+elif args.mode == 6:
 	var_sel = np.load(f'saved_results/lightchamber{args.n}_var.npy')[:,1,:]
 
 	groups = [np.sum(np.square(var_sel[:, :] - np.array([[1] * 5 + [0] * 6])), 1) > 0,
@@ -457,4 +460,4 @@ elif args.mode == 9:
 	axs[1].text(3.8, 0.7, r"(ii)$~8 \in \hat{S}$", va='center', ha='center', rotation='vertical', size=15)
 	axs[2].text(3.8, 0.7, r"(iii)$~[5] \setminus \hat{S} \neq \emptyset$", va='center', ha='center', rotation='vertical', size=15)
 
-	fig.savefig("saved_results/fig6e.pdf", bbox_inches='tight')
+	fig.savefig("saved_results/chamber-e.pdf", bbox_inches='tight')
