@@ -55,11 +55,11 @@ We also include the simulation result run by our laptop in the `saved_results` d
 
 ```bash
 # Plot figures for FAIR-Linear (Fig 4)
-python unit_test_vis.py --exp_id 1 --ntrial 50     # plot Fig. 4a)
-python unit_test_vis.py --exp_id 2 --ntrial 50     # plot in Fig. 4b)
+python unit_tests_vis.py --exp_id 1 --ntrial 50     # plot Fig. 4a)
+python unit_tests_vis.py --exp_id 2 --ntrial 50     # plot in Fig. 4b)
 # Plot figures for FAIR-NN (Fig 8)
-python unit_test_vis.py --exp_id 3 --ntrial 50     # plot in Fig. 5a)
-python unit_test_vis.py --exp_id 4 --ntrial 50     # plot in Fig. 5b)
+python unit_tests_vis.py --exp_id 3 --ntrial 50     # plot in Fig. 5a)
+python unit_tests_vis.py --exp_id 4 --ntrial 50     # plot in Fig. 5b)
 ```
 
 ### Real data application I: discovery from real physical system

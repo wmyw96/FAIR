@@ -82,7 +82,7 @@ if args.exp_id == 1:
 	ax1.set_xlabel('$n$', fontsize=22)
 
 	ax1.legend(loc='best')
-	plt.show()
+	plt.savefig('saved_results/exp-linear-p70.pdf')
 
 
 
@@ -152,7 +152,7 @@ if args.exp_id == 2:
 	ax1.set_xscale("log")
 
 	ax1.legend(loc='upper left')
-	plt.show()
+	plt.savefig('saved_results/exp-linear-p15.pdf')
 
 
 if args.exp_id == 3:
@@ -210,7 +210,7 @@ if args.exp_id == 3:
 	ax1.set_yticks(np.array([1e-2, 1e-1, 0.2, 0.4, 0.5]))
 
 	ax1.legend(loc='best')
-	plt.show()
+	plt.savefig('saved_results/exp-nonlinear-m1.pdf')
 
 
 
@@ -274,5 +274,5 @@ if args.exp_id == 4:
 	ax1.set_yticks(np.array([4e-2, 1e-1, 0.5, 1.0]))
 
 	ax1.legend(loc='best')
-	plt.show()
+	plt.savefig('saved_results/exp-nonlinear-m2.pdf')
 
