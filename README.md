@@ -6,11 +6,18 @@ This repository contains code to reproduce the simulation and real dataset appli
 
 To cite this paper:
 ```bibtex
-@article{gu2024causality,
-  title={Causality Pursuit from Heterogeneous Environments via Neural Adversarial Invariance Learning},
-  author={Gu, Yihong and Fang, Cong and B{\"u}hlmann, Peter and Fan, Jianqing},
-  journal={arXiv preprint arXiv:2405.04715},
-  year={2024}
+@article{gu2025causality,
+	author = {Yihong Gu and Cong Fang and Peter B{\"u}hlmann and Jianqing Fan},
+	title = {{Causality pursuit from heterogeneous environments via neural adversarial invariance learning}},
+	volume = {53},
+	journal = {The Annals of Statistics},
+	number = {5},
+	publisher = {Institute of Mathematical Statistics},
+	pages = {2230 -- 2257},
+	keywords = {Adversarial estimation, causal discovery, conditional moment restriction, Gumbel approximation, Invariance, neural networks},
+	year = {2025},
+	doi = {10.1214/25-AOS2541},
+	URL = {https://doi.org/10.1214/25-AOS2541}
 }
 ```
 
